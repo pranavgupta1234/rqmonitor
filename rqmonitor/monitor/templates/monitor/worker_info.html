@@ -1,0 +1,59 @@
+<div class="card" id="worker_info_card_id" name="{{ worker_name|default:'null' }}">
+  <h4 class="card-header">Info for :: {{ worker_name | default:"Click on any above worker to view below details"}}</h4>
+  <div class="card-body">
+    <table class="table table-bordered">
+      <thead>
+      <tr>
+        <th scope="col">Attribute</th>
+        <th scope="col">Value</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <th scope="row">Birth Date</th>
+        <td>{{ worker_birth_data|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Death Date</th>
+        <td>{{ worker_birth_data|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Failed Job Count</th>
+        <td>{{ worker_failed_job_count|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Successful Job Count</th>
+        <td>{{ worker_successful_job_count|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Job Monitoring Interval</th>
+        <td>{{ worker_job_monitoring_interval|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Last Heartbeat</th>
+        <td>{{ worker_last_heartbeat|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Current Job ID</th>
+        <td>{{ worker_current_job_id|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Last Cleaned</th>
+        <td>{{ worker_last_cleaned_at|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Host Name</th>
+        <td>{{ worker_host_name|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Worker TTL</th>
+        <td>{{ worker_ttl|default:"-" }}</td>
+      </tr>
+      <tr>
+        <th scope="row">Result TTL</th>
+        <td>{{ worker_result_ttl|default:"-" }}</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
