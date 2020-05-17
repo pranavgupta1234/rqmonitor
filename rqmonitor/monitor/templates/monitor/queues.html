@@ -3,7 +3,7 @@
   <div class="row">
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
       <div class="page-header">
-        <h2 class="pageheader-title">RQ Workers for {{rq_host_url}}</h2>
+        <h2 class="pageheader-title">RQ Queues for {{rq_host_url}}</h2>
       </div>
     </div>
   </div>
@@ -13,14 +13,14 @@
       <div class="card">
         <div class="card-body">
           <div class="table-responsive">
-            {% include 'monitor/table_workers.html' %}
+            {% include 'monitor/table_queues.html' %}
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Confirmation Worker Delete Modal -->
+  <!-- Confirmation Queue Delete Modal -->
   <div class="modal fade" id="confirmation" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -37,13 +37,10 @@
         </div>
         <div class="modal-footer">
           <button type="button" id="modalcancel" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" id="modalsubmit" class="btn btn-primary delete_worker">Send SIGINT</button>
+          <button type="button" id="modalsubmit" class="btn btn-primary delete_queue">Send SIGINT</button>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- Worker Info Card Modal -->
-  {% include 'monitor/worker_info.html' %}
 
 </div>

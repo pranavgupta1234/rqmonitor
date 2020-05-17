@@ -1,59 +1,69 @@
-<div class="card" id="worker_info_card_id" name="{{ worker_name|default:'null' }}">
-  <h4 class="card-header">Info for :: {{ worker_name | default:"Click on any above worker to view below details"}}</h4>
-  <div class="card-body">
-    <table class="table table-bordered">
-      <thead>
-      <tr>
-        <th scope="col">Attribute</th>
-        <th scope="col">Value</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr>
-        <th scope="row">Birth Date</th>
-        <td>{{ worker_birth_data|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Death Date</th>
-        <td>{{ worker_birth_data|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Failed Job Count</th>
-        <td>{{ worker_failed_job_count|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Successful Job Count</th>
-        <td>{{ worker_successful_job_count|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Job Monitoring Interval</th>
-        <td>{{ worker_job_monitoring_interval|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Last Heartbeat</th>
-        <td>{{ worker_last_heartbeat|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Current Job ID</th>
-        <td>{{ worker_current_job_id|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Last Cleaned</th>
-        <td>{{ worker_last_cleaned_at|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Host Name</th>
-        <td>{{ worker_host_name|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Worker TTL</th>
-        <td>{{ worker_ttl|default:"-" }}</td>
-      </tr>
-      <tr>
-        <th scope="row">Result TTL</th>
-        <td>{{ worker_result_ttl|default:"-" }}</td>
-      </tr>
-      </tbody>
-    </table>
+<div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Worker Name</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th scope="col">Attribute</th>
+              <th scope="col">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Birth Date</th>
+              <td id="birth_date"></td>
+            </tr>
+            <tr>
+              <th scope="row">Death Date</th>
+              <td id="death_date"></td>
+            </tr>
+            <tr>
+              <th scope="row">Failed Job Count</th>
+              <td id="failed_job_count"></td>
+            </tr>
+            <tr>
+              <th scope="row">Successful Job Count</th>
+              <td id="successful_job_count"></td>
+            </tr>
+            <tr>
+              <th scope="row">Job Monitoring Interval</th>
+              <td id="job_monitoring_interval"></td>
+            </tr>
+            <tr>
+              <th scope="row">Last Heartbeat</th>
+              <td id="last_heartbeat"></td>
+            </tr>
+            <tr>
+              <th scope="row">Current Job ID</th>
+              <td id="current_job_id"></td>
+            </tr>
+            <tr>
+              <th scope="row">Last Cleaned</th>
+              <td id="last_cleaned"></td>
+            </tr>
+            <tr>
+              <th scope="row">Host Name</th>
+              <td id="host_name"></td>
+            </tr>
+            <tr>
+              <th scope="row">Worker TTL</th>
+              <td id="worker_ttl"></td>
+            </tr>
+            <tr>
+              <th scope="row">Result TTL</th>
+              <td id="result_ttl"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>

@@ -1,0 +1,387 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>RQ Monitor</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/circular-std/style.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/libs/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/fontawesome/css/fontawesome-all.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/vendor/datatables/css/dataTables.bootstrap4.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/vendor/datatables/css/buttons.bootstrap4.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/vendor/datatables/css/select.bootstrap4.css' %}">
+    <link rel="stylesheet" type="text/css"
+      href="{% static 'assets/vendor/datatables/css/fixedHeader.bootstrap4.css' %}">
+  </head>
+
+  <body>
+    <script src="{% static 'assets/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
+
+    <div class="dashboard-main-wrapper">
+
+      {% include 'monitor/top_bar.html' %}
+
+      {% include 'monitor/side_navbar.html' %}
+
+      <div class="dashboard-wrapper" id='main_dashboard'>
+
+        {% include 'monitor/dashboard_wrapper.html'%}
+
+      </div>
+
+    </div>
+
+    <script type="text/javascript">
+      $(document).ready(function () {
+
+        $('#jobsmenu').on('show.bs.collapse', function (e) {
+          if($(this).is(e.target)){
+            $.ajax({
+            type: "GET",
+            url: "{% url 'get_jobs_dashboard' %}",
+            data: { 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            success: function (response) {
+              $('#main_dashboard').html(response);
+              setup_jobs_datatable();
+            },
+            error: function (rs, e) {
+              $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
+            }
+          });
+          }
+        });
+
+        $('#workers_link').on('click', function () {
+          $.ajax({
+            type: "GET",
+            url: "{% url 'get_workers_dashboard' %}",
+            data: { 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            success: function (response) {
+              $('#main_dashboard').html(response);
+              setup_worker_datatable();
+            },
+            error: function (rs, e) {
+              $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
+            }
+          });
+        });
+
+        $('#queues_link').on('click', function () {
+          $.ajax({
+            type: "GET",
+            url: "{% url 'get_queues_dashboard' %}",
+            data: {'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            success: function (response) {
+              $('#main_dashboard').html(response);
+              setup_queues_datatable();
+            },
+            error: function (rs, e) {
+              $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
+            }
+          });
+        });
+
+      });
+
+      function setup_queues_datatable(){
+
+        var queues_table = $('#queues_table').DataTable({
+          "ajax": {
+            "url": "{% url 'list_queues_api' %}",
+            "type": "GET",
+            "data": { 'from_datatable': 'True', 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            "dataSrc": "data",
+            "dataType": "json",
+          },
+          "columns": [
+            {
+              data: "queue_name",
+              render: function (data, type, row, meta) {
+                if (type === 'display') {
+                  data = '<a href="#" data-toggle="modal" data-target=".bd-example-modal-lg">' + data + '</a>';
+                }
+                return data;
+              },
+              className: "queue_info_modal"
+            },
+            { data: "job_count" },
+            {
+              data: "action",
+              width: "10%",
+              render: function (data, type, row, meta) {
+                if (type == 'display') {
+                  data =
+                    `
+                      <a href="#" class="btn btn-outline-warning btn-block">Clear</a>
+                      <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
+                    `
+                }
+                return data;
+              },
+              defaultContent:
+                `
+                <a href="#" class="btn btn-outline-warning btn-block">Clear</a>
+                <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
+                `
+            },
+
+          ]
+        });
+
+      }
+
+      function setup_jobs_datatable() {
+        var job_result_ttl = "specifies how long (in seconds) successful jobs and their results are kept. Expired jobs will be automatically deleted. Defaults to 500 seconds.";
+        var job_timeout = "specifies the maximum runtime of the job before it’s interrupted and marked as failed. Its default unit is seconds and it can be an integer or a string representing an integer(e.g. 2, '2'). Furthermore, it can be a string with specify unit including hour, minute, second (e.g. '1h', '3m', '5s').";
+        var job_failure_ttl = " specifies how long (in seconds) failed jobs are kept (defaults to 1 year)";
+        var job_ttl = "specifies the maximum queued time (in seconds) of the job before it’s discarded. This argument defaults to None (infinite TTL).";
+
+        var jobs_table = $('#jobs_table').DataTable({
+          //"serverSide": "True",
+          "ajax": {
+            "url": "{% url 'list_jobs_api' %}",
+            "type": "GET",
+            "data": { 'from_datatable': 'True', 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            "dataSrc": "data",
+            dataType: "json",
+          },
+          "columns": [
+            {
+              data: "job_info",
+              render: function (data, type, row, meta) {
+                //alert(Object.values(data));
+                if (type === 'display') {
+                  data = `
+                      <div class="card">
+                        <div class="card-body">
+                          <h3 class="card-title">` + Object.values(data)[0] + `</h3>
+                          <h6 class="card-subtitle mb-2 text-muted">` + Object.values(data)[1] + ` on` +
+                            `<span class="badge badge-success ml-6">` + Object.values(data)[4] + `</span>
+                           with status
+                            <span class="badge badge-success">` + Object.values(data)[5] + `</span>
+                          </h6>
+                          <div class="alert alert-danger" role="alert">
+                            <p class="card-text">
+                              ` + Object.values(data)[2] + `
+                            </p>
+                            <p class="card-text">
+                              ` + Object.values(data)[3] + `
+                            </p>
+                          </div>
+                          <button type="button" class="btn btn-primary btn-sm" data-toggle="popover"
+                          title data-content="`+ job_ttl + `"
+                          data-original-title="ttl">
+                            Job TTL <span class="badge badge-light">` + Object.values(data)[6] + `</span>
+                          </button>
+                          <button type="button" class="btn btn-primary btn-sm" data-toggle="popover"
+                          title data-content="`+ job_timeout + `"
+                          data-original-title="timeout">
+                            Timeout <span class="badge badge-light">` + Object.values(data)[7] + `</span>
+                          </button>
+                          <button type="button" class="btn btn-primary btn-sm" data-toggle="popover"
+                          title data-content="`+ job_result_ttl + `"
+                          data-original-title=result ttl>
+                            Result TTL <span class="badge badge-light">` + Object.values(data)[8] + `</span>
+                          </button>
+                          <button type="button" class="btn btn-primary btn-sm" data-toggle="popover"
+                          title data-content="`+ job_failure_ttl + `"
+                          data-original-title="failure ttl">
+                            Failure TTL <span class="badge badge-light">` + Object.values(data)[9] + `</span>
+                          </button>
+
+                        </div>
+                      </div>
+                      `
+                }
+                return data;
+              },
+              className: "worker_info_card_link"
+            },
+            {
+              data: "action",
+              width: "10%",
+              render: function (data, type, row, meta) {
+                if (type == 'display') {
+                  data =
+                    `
+                    <a href="#" class="btn btn-outline-primary btn-block">Requeue</a>
+                    <a href="#" class="btn btn-outline-warning btn-block">Cancel</a>
+                    <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
+                    `
+                }
+                return data;
+              },
+              defaultContent:
+                `
+                <a href="#" class="btn btn-outline-primary btn-block">Requeue</a>
+                <a href="#" class="btn btn-outline-warning btn-block">Cancel</a>
+                <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
+                `
+            },
+          ]
+        });
+
+
+      }
+
+      function setup_worker_datatable() {
+        worker_status = {
+          'idle': 'warning',
+          'busy': 'success',
+          'started': 'success',
+          'suspended': 'danger',
+        }
+
+        var workers_table = $('#workers_table').DataTable({
+          "ajax": {
+            "url": "{% url 'list_workers_api' %}",
+            "type": "GET",
+            "data": { 'from_datatable': 'True', 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            "dataSrc": "data",
+            "dataType": "json",
+          },
+          "columns": [
+            {
+              data: "worker_name",
+              render: function (data, type, row, meta) {
+                if (type === 'display') {
+                  data = '<a href="#" data-toggle="modal" data-target=".bd-example-modal-lg">' + data + '</a>';
+                }
+                return data;
+              },
+              className: "worker_info_modal"
+            },
+            { data: "listening_on" },
+            {
+              data: "status",
+              render: function (data, type, row, meta) {
+                if (type === 'display') {
+                  data = `<span class="badge badge-` + worker_status[data] + `">` + data + `</span>`;
+                }
+                return data;
+              },
+            },
+            { data: "current_job_id" },
+            { data: "success_jobs" },
+            { data: "failed_jobs" },
+            {
+              data: null,
+              width: "10%",
+              render: function (data, type, row, meta) {
+                if (type === 'display') {
+                  data = `
+                    <a href="#" class="btn btn-dark" data-toggle="modal"
+                    data-target="#confirmation" data-worker="`+ row.worker_name + `"> Delete </a>
+                    `;
+                }
+                return data;
+              },
+              className: "center",
+              defaultContent: `
+                <a href="#" class="btn btn-dark" data-toggle="modal"
+                 data-target="#confirmation"> Delete </a>
+                `,
+            }
+          ]
+        });
+
+        $('#confirmation').on('show.bs.modal', function (event) {
+          var button = $(event.relatedTarget) // Button that triggered the modal
+          var worker_name = button.data('worker') // Extract info from data-* attributes
+          var modal = $(this)
+          modal.find('.modal-title').text('Confirm to delete ' + worker_name)
+          modal.attr('name', worker_name)
+          //TODO add ability to send more signals
+          modal.find('.modal-body').text('The worker will receive SIGINT signal to accomplish warm shutdown\
+          any currently executing tasks will be completed first.')
+        })
+
+        // restore modal state on closing
+        $("#confirmation").on("hidden.bs.modal", function () {
+          $(this).find('modal-title').trigger('reset');
+          $(this).find('name').trigger('reset');
+          $(this).find('.modal-footer').show();
+        });
+
+        $('#confirmation').on('click', '.delete_worker', function (event) {
+          var worker_id = $(this).closest('.modal').attr('name');
+          $.ajax({
+            type: "POST",
+            url: "{% url 'delete_single_worker_api' %}",
+            data: { 'worker_id': worker_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            dataType: "json",
+            success: function (response) {
+              $('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+              $('.modal-body').html('Successfully deleted worker with id <strong>' + response.worker_id + '</strong>');
+              $('.modal-footer').hide();
+              setTimeout(function () {
+                $('#confirmation').modal('hide');
+              }, 2000);
+
+            },
+            error: function (rs, e) {
+              $('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+              // TODO show formatted error response from server
+              $('.modal-body').text('Unable to delete worker with id ' + worker_id);
+            }
+          });
+        })
+
+        $('#workers_table tbody').on('click', '.worker_info_modal', function () {
+          var row_clicked = workers_table.row($(this).parents('tr')).data();
+          worker_id = Object.values(row_clicked)[0];
+
+          $.ajax({
+            url: "{% url 'worker_info_api' %}",
+            data: { 'worker_id': String(worker_id).trim(), 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            success: function (data) {
+              $('#worker_info_card').empty();
+              $('#worker_info_card').html(data);
+            },
+            error: function (rs, e) {
+              alert(rs.responseText);
+            }
+          });
+
+        });
+
+        var table_refresh_interval = setInterval(function () {
+          workers_table.ajax.reload(null, false); // user paging is not reset on reload
+        }, 3000);
+      }
+
+
+    </script>
+
+    <!-- Optional JavaScript -->
+    <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.js' %}"></script>
+    <script src="{% static 'assets/vendor/slimscroll/jquery.slimscroll.js' %}"></script>
+    <script src="{% static 'assets/vendor/multi-select/js/jquery.multi-select.js' %}"></script>
+
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="{% static 'assets/vendor/datatables/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/dataTables.buttons.min.js"></script>
+    <script src="{% static 'assets/vendor/datatables/js/buttons.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'assets/vendor/datatables/js/data-table.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/rowgroup/1.0.4/js/dataTables.rowGroup.min.js"></script>
+    <script src="https://cdn.datatables.net/select/1.2.7/js/dataTables.select.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
+    <script src="{% static 'assets/libs/js/main-js.js' %}"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.17/dist/css/bootstrap-select.min.css">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.17/dist/js/bootstrap-select.min.js"></script>
+
+  </body>
+
+</html>

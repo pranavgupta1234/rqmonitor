@@ -1,58 +1,13 @@
-<div class="card">
-  <h5 class="card-header">Total Workers :: {{rq_workers_count}} </h5>
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-striped table-bordered first">
-        <thead>
-        <tr>
-          <th>Worker Name</th>
-          <th>Listening On</th>
-          <th>Status</th>
-          <th>Current Job ID</th>
-          <th>Success/Fail Jobs</th>
-          <th>Action</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for worker in rq_workers %}
-        <tr>
-          <td>
-            <a href="#worker_info_card" class="worker_info" name="{{worker.name}}">
-              {{worker.name}}
-            </a>
-          </td>
-          <td>{{worker.queues}}</td>
-          <td>{{worker.state}}</td>
-          <td>{{worker.current_job}}</td>
-          <td>{{worker.success_job_count}}/{{worker.failed_job_count}}</td>
-          <td>
-            <a href="#" id="delete_{{worker.name}}"
-               class="btn btn-outline-dark delete_worker"
-               name="{{worker.name}}">
-              Delete
-            </a>
-          </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<script type="text/javascript">
-$('.delete_worker').click(function(){
-    $.ajax({
-             type: "POST",
-             url: "{% url 'delete_single_worker_api' %}",
-             data: {'worker_id': $(this).attr('name'), 'csrfmiddlewaretoken': '{{ csrf_token }}'},
-             dataType: "json",
-             success: function(response) {
-                    alert('Warm shutdown requested for ' + response.worker_id);
-              },
-              error: function(rs, e) {
-                     alert(rs.responseText);
-              }
-        });
-});
-</script>
+<table class="table table-bordered" id="workers_table">
+  <thead>
+  <tr>
+    <th>Worker Name</th>
+    <th>Listening On</th>
+    <th>Status</th>
+    <th>Current Job ID</th>
+    <th>Success Jobs</th>
+    <th>Failed Jobs</th>
+    <th>Action</th>
+  </tr>
+  </thead>
+</table>
