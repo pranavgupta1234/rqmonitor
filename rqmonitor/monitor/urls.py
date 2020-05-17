@@ -25,7 +25,8 @@ urlpatterns = [
     path('get_queues_dashboard/', get_queues_dashboard, name='get_queues_dashboard'),
     path('queues/', list_queues_api, name='list_queues_api'),
     path('workers/', list_workers_api, name='list_workers_api'),
+    path('jobs/', list_jobs_api, name='list_jobs_api'),
     path('workers/delete', delete_single_worker_api, name='delete_single_worker_api'),
     path('workers/info', worker_info_api, name='worker_info_api'),
-    path('jobs/', list_jobs_api, name='list_jobs_api'),
+
 ]

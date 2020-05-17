@@ -133,6 +133,12 @@
           ]
         });
 
+        var queues_refresh_interval = setInterval(function () {
+          if($('#main_dashboard').has($('#queues_table')).length > 0)          {
+            queues_table.ajax.reload(null, false); // user paging is not reset on reload
+          }
+        }, 3000);
+
       }
 
       function setup_jobs_datatable() {
@@ -225,11 +231,17 @@
             },
           ]
         });
-
+        
+        var jobs_refresh_interval = setInterval(function () {
+          if($('#main_dashboard').has('#jobs_table').length>0)          {
+            jobs_table.ajax.reload(null, false); // user paging is not reset on reload
+          }
+        }, 3000);
 
       }
 
       function setup_worker_datatable() {
+
         worker_status = {
           'idle': 'warning',
           'busy': 'success',
@@ -351,7 +363,9 @@
         });
 
         var table_refresh_interval = setInterval(function () {
-          workers_table.ajax.reload(null, false); // user paging is not reset on reload
+          if($('#main_dashboard').has('#workers_table').length>0)          {
+            workers_table.ajax.reload(null, false); // user paging is not reset on reload
+          }
         }, 3000);
       }
 
