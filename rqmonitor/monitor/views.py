@@ -9,6 +9,7 @@ from rq.registry import (StartedJobRegistry,
                          FailedJobRegistry,
                          DeferredJobRegistry,
                          ScheduledJobRegistry)
+from rq.utils import utcformat
 import redis
 import json
 import os
@@ -169,20 +170,20 @@ def worker_info_api(request):
 
     worker_instance = Worker.find_by_key(Worker.redis_worker_namespace_prefix + worker_id,
                                          connection=redis_connection)
-    return render(request, 'monitor/worker_info.html', {
+    return HttpResponse(json.dumps({
         'worker_ttl': worker_instance.default_worker_ttl,
         'worker_result_ttl': worker_instance.default_result_ttl,
         'worker_name': worker_instance.name,
-        'worker_birth_date': worker_instance.birth_date,
+        'worker_birth_date': utcformat(worker_instance.birth_date),
         'worker_host_name': worker_instance.hostname.decode('utf-8'),
-        'worker_death_date': worker_instance.death_date,
+        'worker_death_date': utcformat(worker_instance.death_date) if worker_instance.death_date is not None else "Is Alive",
         'worker_last_cleaned_at': worker_instance.last_cleaned_at,
         'worker_failed_job_count': worker_instance.failed_job_count,
         'worker_successful_job_count': worker_instance.successful_job_count,
         'worker_job_monitoring_interval': worker_instance.job_monitoring_interval,
-        'worker_last_heartbeat': worker_instance.last_heartbeat,
-        'worker_current_job_id': worker_instance.get_current_job_id()
-    })
+        'worker_last_heartbeat': utcformat(worker_instance.last_heartbeat) if worker_instance.last_heartbeat is not None else "Not available",
+        'worker_current_job_id': worker_instance.get_current_job_id(),
+    }), content_type='application/json')
 
 
 def list_all_queues():
@@ -237,33 +238,33 @@ def reformat_job_data(job: Job):
 
 def list_jobs_api(request):
     """
-    :param request: Django web request
+    :param request: Django GET request containing two parameters acting as filter for jobs
+                    1) Jobs Status list (with these status)
+                    2) queues list (to fetch queues)
     :return: rendered output
     """
-    all_queues = list_all_queues()
+
+    requested_queues = request.GET.getlist('queues[]', default=list_all_queues_names())
+    requested_job_status = request.GET.getlist('jobstatus[]', default=list_all_possible_job_status())
+
     job_data_for_dashboard = []
 
-    for queue in all_queues:
+    for queue in requested_queues:
         for job in list_jobs_on_queue(queue):
-            job_data_for_dashboard.append(reformat_job_data(job))
+            if job.get_status() in requested_job_status:
+                job_data_for_dashboard.append(reformat_job_data(job))
         # Include jobs from registries as well
         for job in list_jobs_in_queue_all_registries(queue):
-            job_data_for_dashboard.append(reformat_job_data(job))
+            if job.get_status() in requested_job_status:
+                job_data_for_dashboard.append(reformat_job_data(job))
 
     request_source = request.GET.get('from_datatable', None)
 
-    if request_source is None:
-        return render(request, 'monitor/jobs.html', {
-            'rq_host_url': REDIS_RQ_HOST,
-            'rq_queues': list_all_queues_names(),
-            'rq_job_status': list_all_possible_job_status(),
-        })
-    else:
-        return HttpResponse(json.dumps({
-                                    'rq_host_url': REDIS_RQ_HOST,
-                                    'data': job_data_for_dashboard,
-                                    }),
-        content_type='application/json')
+    return HttpResponse(json.dumps({
+                                'rq_host_url': REDIS_RQ_HOST,
+                                'data': job_data_for_dashboard,
+                                }),
+    content_type='application/json')
 
 
 def get_queue(queue):
