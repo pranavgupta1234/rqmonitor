@@ -2,6 +2,9 @@
 MANIFEST
 .idea
 
+*.log
+*.pid
+
 # C extensions
 *.so
 
