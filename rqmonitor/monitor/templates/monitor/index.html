@@ -21,13 +21,14 @@
 
   <body>
     <script src="{% static 'assets/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
-
     <div class="dashboard-main-wrapper">
 
       {% include 'monitor/top_bar.html' %}
 
       {% include 'monitor/side_navbar.html' %}
 
+      <!-- {% include 'monitor/preloader.html' %} -->
+      
       <div class="dashboard-wrapper" id='main_dashboard'>
 
         {% include 'monitor/dashboard_wrapper.html'%}
@@ -91,6 +92,11 @@
       function setup_queues_datatable(){
 
         var queues_table = $('#queues_table').DataTable({
+          "processing": "True",
+          "language": {
+            "loadingRecords": "&nbsp;",
+            "processing": "Loading...",
+          },
           "ajax": {
             "url": "{% url 'list_queues_api' %}",
             "type": "GET",
@@ -147,12 +153,49 @@
         var job_failure_ttl = " specifies how long (in seconds) failed jobs are kept (defaults to 1 year)";
         var job_ttl = "specifies the maximum queued time (in seconds) of the job before it’s discarded. This argument defaults to None (infinite TTL).";
 
+        function get_checked_queues(){
+          var queues = []
+          $('.queuelistitem').each(function(index){
+            var active = $(this).find('input').prop("checked") ? 1 : 0 ;
+            if(active){
+              queues.push($(this).find('label').text());
+            }
+          });
+          //alert(JSON.stringify(queues));
+          return queues;
+        }
+
+        function get_checked_job_status(){
+          var status = []
+          $('.jobstatuslistitem').each(function(index){
+            var active = $(this).find('input').prop("checked") ? 1 : 0 ;
+            if(active){
+              status.push($(this).find('label').text());
+            }
+          });
+          //alert(JSON.stringify(status));
+          return status;
+        }
+
         var jobs_table = $('#jobs_table').DataTable({
           //"serverSide": "True",
+          "processing": "True",
+          "language": {
+            "loadingRecords": "&nbsp;",
+            "processing": "Loading...",
+          },
           "ajax": {
             "url": "{% url 'list_jobs_api' %}",
             "type": "GET",
-            "data": { 'from_datatable': 'True', 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            // in case of reload if data is initialised as static object then will not
+            //be evaluated only once. If you want to read new data on each reload, you'd need to use it as a 
+            //function. check @ comment at https://datatables.net/reference/api/ajax.reload()
+            "data": function(d){
+              d.queues = get_checked_queues(), 
+              d.jobstatus = get_checked_job_status(), 
+              d.from_datatable = 'True',
+              d.csrfmiddlewaretoken = '{{ csrf_token }}'
+            },
             "dataSrc": "data",
             dataType: "json",
           },
@@ -232,11 +275,20 @@
           ]
         });
         
+        
         var jobs_refresh_interval = setInterval(function () {
           if($('#main_dashboard').has('#jobs_table').length>0)          {
             jobs_table.ajax.reload(null, false); // user paging is not reset on reload
           }
         }, 3000);
+        
+        $('#jobstatus').on('change', 'input[type="checkbox"]', function(event){
+          jobs_table.ajax.reload(null, false);
+        });
+
+        $('#fromqueues').on('change', 'input[type="checkbox"]', function(event){
+          jobs_table.ajax.reload(null, false);
+        });
 
       }
 
@@ -250,6 +302,11 @@
         }
 
         var workers_table = $('#workers_table').DataTable({
+          "processing": "True",
+          "language": {
+            "loadingRecords": "&nbsp;",
+            "processing": "Loading...",
+          },
           "ajax": {
             "url": "{% url 'list_workers_api' %}",
             "type": "GET",
@@ -262,7 +319,9 @@
               data: "worker_name",
               render: function (data, type, row, meta) {
                 if (type === 'display') {
-                  data = '<a href="#" data-toggle="modal" data-target=".bd-example-modal-lg">' + data + '</a>';
+                  data = `
+                  <a href="#" data-toggle="modal" data-target="#worker_info"
+                  data-worker="`+ data + `">` + data + `</a>`;
                 }
                 return data;
               },
@@ -344,29 +403,43 @@
           });
         })
 
-        $('#workers_table tbody').on('click', '.worker_info_modal', function () {
-          var row_clicked = workers_table.row($(this).parents('tr')).data();
-          worker_id = Object.values(row_clicked)[0];
-
-          $.ajax({
-            url: "{% url 'worker_info_api' %}",
-            data: { 'worker_id': String(worker_id).trim(), 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-            success: function (data) {
-              $('#worker_info_card').empty();
-              $('#worker_info_card').html(data);
-            },
-            error: function (rs, e) {
-              alert(rs.responseText);
-            }
-          });
-
-        });
-
         var table_refresh_interval = setInterval(function () {
           if($('#main_dashboard').has('#workers_table').length>0)          {
             workers_table.ajax.reload(null, false); // user paging is not reset on reload
           }
         }, 3000);
+        
+        $('#worker_info').on('show.bs.modal', function (event) {
+          var button = $(event.relatedTarget); // Button that triggered the modal
+          var worker_id = button.data('worker'); // Extract info from data-* attributes
+          var modal = $(this);
+
+          $.ajax({
+            url: "{% url 'worker_info_api' %}",
+            data: { 'worker_id': worker_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+            success: function (data) {
+              modal.find('.modal-title').text('Showing Info for :: ' + worker_id)
+              modal.attr('name', worker_id)
+              //TODO add ability to send more signals
+              modal.find('#birth_date').text(data.worker_birth_date);
+            },
+            error: function (rs, e) {
+              alert('here');
+              alert(rs.responseText);
+            }
+          });
+        });
+        
+        
+        /*
+        $('#workers_table tbody').on('click', '.worker_info_modal', function () {
+          var row_clicked = workers_table.row($(this).parents('tr')).data();
+          worker_id = Object.values(row_clicked)[0];
+
+          
+
+        });
+        */
       }
 
 
