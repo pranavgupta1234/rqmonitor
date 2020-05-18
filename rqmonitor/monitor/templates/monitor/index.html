@@ -390,6 +390,8 @@
               $('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
               $('.modal-body').html('Successfully deleted worker with id <strong>' + response.worker_id + '</strong>');
               $('.modal-footer').hide();
+              // force refresh to update
+              workers_table.ajax.reload(null, false);
               setTimeout(function () {
                 $('#confirmation').modal('hide');
               }, 2000);
@@ -418,10 +420,19 @@
             url: "{% url 'worker_info_api' %}",
             data: { 'worker_id': worker_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
             success: function (data) {
-              modal.find('.modal-title').text('Showing Info for :: ' + worker_id)
+              modal.find('.modal-title').text('Showing Info for ' + worker_id)
               modal.attr('name', worker_id)
-              //TODO add ability to send more signals
               modal.find('#birth_date').text(data.worker_birth_date);
+              modal.find('#death_date').text(data.worker_death_date);
+              modal.find('#failed_job_count').text(data.worker_failed_job_count);
+              modal.find('#successful_job_count').text(data.worker_successful_job_count);
+              modal.find('#job_monitoring_interval').text(data.worker_job_monitoring_interval);
+              modal.find('#last_heartbeat').text(data.worker_last_heartbeat);
+              modal.find('#current_job_id').text(data.worker_current_job_id);
+              modal.find('#last_cleaned_at').text(data.worker_last_cleaned_at);
+              modal.find('#host_name').text(data.worker_host_name);
+              modal.find('#worker_ttl').text(data.worker_ttl);
+              modal.find('#result_ttl').text(data.worker_result_ttl);
             },
             error: function (rs, e) {
               alert('here');
@@ -435,9 +446,6 @@
         $('#workers_table tbody').on('click', '.worker_info_modal', function () {
           var row_clicked = workers_table.row($(this).parents('tr')).data();
           worker_id = Object.values(row_clicked)[0];
-
-          
-
         });
         */
       }
