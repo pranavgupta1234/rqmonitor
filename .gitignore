@@ -22,3 +22,9 @@ develop-eggs
 .installed.cfg
 lib
 lib64
+
+venv/
+
+.pytest_cache/
+.coverage
+htmlcov/
