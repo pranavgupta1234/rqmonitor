@@ -1,14 +1,11 @@
 <div class="dashboard-header">
     <nav class="navbar navbar-expand-lg bg-white fixed-top">
         <a class="navbar-brand" href="/">RQ Monitor</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse " id="navbarSupportedContent">
-            <ul class="navbar-nav ml-auto navbar-right-top">
-                {% include 'rqmonitor/redis_memory.html' %}
-            </ul>
-        </div>
+        <select class="mr-5" id="redis_instances" name="redis" style="width: 55%">
+            {% for redis_instance in redis_instance_list %}
+            <option value="{{redis_instance}}">{{redis_instance}}</option>
+            {% endfor %}
+        </select>
+        {% include 'rqmonitor/redis_memory.html' %}
     </nav>
 </div>

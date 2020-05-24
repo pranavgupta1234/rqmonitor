@@ -1243,6 +1243,29 @@ Top Header
     font-weight: 700;
     color: #007bff;
 }
+
+.navbar-redis-memory {
+    display: inline-block;
+    margin-left: 2rem;
+    line-height: inherit;
+    white-space: nowrap;
+    padding: 11px 20px;
+    font-size: 15px;
+    text-transform: uppercase;
+    font-weight: 200;
+    color: #007bff;
+}
+
+.select2-results__options{
+    font-size:16px !important;
+}
+
+.select2-selection__rendered {
+    font-size: 16px;
+  }
+
+
+
 .navbar-brand:hover{
     color: #007bff;
 }
