@@ -1,226 +1,312 @@
 <!doctype html>
 <html lang="en">
 
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>RQ Monitor</title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet"
-      href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}">
-    <link rel="stylesheet"
-      href="{{ url_for('static', filename='assets/vendor/fonts/circular-std/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='assets/libs/css/style.css') }}">
-    <link rel="stylesheet"
-      href="{{ url_for('static', filename='assets/vendor/fonts/fontawesome/css/fontawesome-all.css') }}">
-    <link rel="stylesheet" type="text/css"
-      href="{{ url_for('static', filename='assets/vendor/datatables/css/dataTables.bootstrap4.css') }}">
-    <link rel="stylesheet" type="text/css"
-      href="{{ url_for('static', filename='assets/vendor/datatables/css/buttons.bootstrap4.css') }}">
-    <link rel="stylesheet" type="text/css"
-      href="{{ url_for('static', filename='assets/vendor/datatables/css/select.bootstrap4.css') }}">
-    <link rel="stylesheet" type="text/css"
-      href="{{ url_for('static', filename='assets/vendor/datatables/css/fixedHeader.bootstrap4.css') }}">
-  </head>
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<title>RQ Monitor</title>
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}">
+		<link rel="stylesheet" href="{{ url_for('static', filename='assets/vendor/fonts/circular-std/style.css') }}">
+		<link rel="stylesheet" href="{{ url_for('static', filename='assets/libs/css/style.css') }}">
+		<link rel="stylesheet"
+			href="{{ url_for('static', filename='assets/vendor/fonts/fontawesome/css/fontawesome-all.css') }}">
+		<link rel="stylesheet" type="text/css"
+			href="{{ url_for('static', filename='assets/vendor/datatables/css/dataTables.bootstrap4.css') }}">
+		<link rel="stylesheet" type="text/css"
+			href="{{ url_for('static', filename='assets/vendor/datatables/css/buttons.bootstrap4.css') }}">
+		<link rel="stylesheet" type="text/css"
+			href="{{ url_for('static', filename='assets/vendor/datatables/css/select.bootstrap4.css') }}">
+		<link rel="stylesheet" type="text/css"
+			href="{{ url_for('static', filename='assets/vendor/datatables/css/fixedHeader.bootstrap4.css') }}">
+		<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+	</head>
 
-  <body>
+	<body>
 
-    <script src="{{ url_for('static', filename='assets/vendor/jquery/jquery-3.3.1.min.js') }}"></script>
-    <div class="dashboard-main-wrapper">
+		<script src="{{ url_for('static', filename='assets/vendor/jquery/jquery-3.3.1.min.js') }}"></script>
+		<div class="dashboard-main-wrapper">
 
-      {% include 'rqmonitor/top_bar.html' %}
+			{% include 'rqmonitor/top_bar.html' %}
 
-      {% include 'rqmonitor/side_navbar.html' %}
+			{% include 'rqmonitor/side_navbar.html' %}
 
-      <!-- {% include 'rqmonitor/preloader.html' %} -->
+			<!-- {% include 'rqmonitor/preloader.html' %} -->
 
-      <div class="dashboard-wrapper" id='main_dashboard'>
+			<div class="dashboard-wrapper" id='main_dashboard'>
 
-        {% include 'rqmonitor/dashboard_wrapper.html'%}
+				{% include 'rqmonitor/dashboard_wrapper.html'%}
 
-      </div>
+			</div>
 
-    </div>
+		</div>
 
-    <script type="text/javascript">
+		<script type="text/javascript">
 
-      //as this is all the js we have and mostly calls are ajax it seems better to directly 
-      // render urls here
+			//as this is all the js we have and mostly calls are ajax it seems better to directly 
+			// render urls here
 
-      $(document).ready(function () {
+			$(document).ready(function () {
 
-        $('#jobsmenu').on('show.bs.collapse', function (e) {
-          if ($(this).is(e.target)) {
-            $.ajax({
-              type: "GET",
-              url: "{{ url_for('get_jobs_dashboard') }}",
-              data: { 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-              success: function (response) {
-                $('#main_dashboard').html(response);
-                setup_jobs_datatable();
-              },
-              error: function (rs, e) {
-                $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
-              }
-            });
-          }
-        });
+				$('#redis_instances').select2({ width: 'resolve' });
 
-        $('#workers_link').on('click', function () {
-          $.ajax({
-            type: "GET",
-            url: "{{ url_for('get_workers_dashboard') }}",
-            data: { 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-            success: function (response) {
-              $('#main_dashboard').html(response);
-              setup_worker_datatable();
-            },
-            error: function (rs, e) {
-              $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
-            }
-          });
-        });
+				$('#jobsmenu').on('show.bs.collapse', function (e) {
+					if ($(this).is(e.target)) {
+						$.ajax({
+							type: "GET",
+							url: "{{ url_for('rqmonitor.get_jobs_dashboard') }}",
+							data: { 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+							success: function (response) {
+								$('#main_dashboard').off();
+								$('#main_dashboard').html(response);
+								setup_jobs_datatable();
+							},
+							error: function (rs, e) {
+								$('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
+							}
+						});
+					}
+				});
 
-        $('#queues_link').on('click', function () {
-          $.ajax({
-            type: "GET",
-            url: "{{ url_for('get_queues_dashboard') }}",
-            data: { 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-            success: function (response) {
-              $('#main_dashboard').html(response);
-              setup_queues_datatable();
-            },
-            error: function (rs, e) {
-              $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
-            }
-          });
-        });
+				$('#workers_link').on('click', function () {
+					$.ajax({
+						type: "GET",
+						url: "{{ url_for('rqmonitor.get_workers_dashboard') }}",
+						data: { 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						success: function (response) {
+							$('#main_dashboard').off();
+							$('#main_dashboard').html(response);
+							setup_worker_datatable();
+						},
+						error: function (rs, e) {
+							$('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
+						}
+					});
+				});
 
-      });
+				$('#queues_link').on('click', function () {
+					$.ajax({
+						type: "GET",
+						url: "{{ url_for('rqmonitor.get_queues_dashboard') }}",
+						data: { 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						success: function (response) {
+							$('#main_dashboard').off();
+							$('#main_dashboard').html(response);
+							setup_queues_datatable();
+						},
+						error: function (rs, e) {
+							$('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
+						}
+					});
+				});
 
-      function setup_queues_datatable() {
+			});
 
-        var queues_table = $('#queues_table').DataTable({
-          "processing": "True",
-          "language": {
-            "loadingRecords": "&nbsp;",
-            "processing": "Loading...",
-          },
-          "ajax": {
-            "url": "{{ url_for('list_queues_api') }}",
-            "type": "GET",
-            "data": { 'from_datatable': 'True', 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-            "dataSrc": "data",
-            "dataType": "json",
-          },
-          "columns": [
-            {
-              data: "queue_name",
-              render: function (data, type, row, meta) {
-                if (type === 'display') {
-                  data = '<a href="#" data-toggle="modal" data-target=".bd-example-modal-lg">' + data + '</a>';
-                }
-                return data;
-              },
-              className: "queue_info_modal"
-            },
-            { data: "job_count" },
-            {
-              data: "action",
-              width: "10%",
-              render: function (data, type, row, meta) {
-                if (type == 'display') {
-                  data =
-                    `
-                    <a href="#" class="btn btn-outline-warning btn-block">Clear</a>
-                    <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
-                  `
-                }
-                return data;
-              },
-              defaultContent:
-                `
-              <a href="#" class="btn btn-outline-warning btn-block">Clear</a>
-              <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
-              `
-            },
+			function setup_queues_datatable() {
 
-          ]
-        });
+				var queues_table = $('#queues_table').DataTable({
+					"processing": "True",
+					"language": {
+						"loadingRecords": "&nbsp;",
+						"processing": "Loading...",
+					},
+					"ajax": {
+						"url": "{{ url_for('rqmonitor.list_queues_api') }}",
+						"type": "GET",
+						"data": { 'from_datatable': 'True', 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						"dataSrc": "data",
+						"dataType": "json",
+					},
+					"columns": [
+						{
+							data: "queue_name",
+							render: function (data, type, row, meta) {
+								if (type === 'display') {
+									data = '<a href="#" data-toggle="modal" data-target=".bd-example-modal-lg">' + data + '</a>';
+								}
+								return data;
+							},
+							className: "queue_info_modal"
+						},
+						{ data: "job_count" },
+						{
+							data: "action",
+							width: "10%",
+							render: function (data, type, row, meta) {
+								if (type == 'display') {
+									data =
+										`
+											<a href="#" class="btn btn-warning btn-block" data-action="empty"
+											data-toggle="modal" data-target="#confirmation" data-queue="`+ row.queue_name + `">Empty</a>
+											<a href="#" class="btn btn-danger btn-block" data-action="delete"
+											data-toggle="modal" data-target="#confirmation" data-queue="`+ row.queue_name + `">Delete</a>
+										`
+								}
+								return data;
+							},
+							defaultContent: 
+										`
+											<a href="#" class="btn btn-warning btn-block" data-action="empty"
+											data-toggle="modal" data-target="#confirmation">Empty</a>
+											<a href="#" class="btn btn-danger btn-block" data-action="delete"
+											data-toggle="modal" data-target="#confirmation">Delete</a>
+										`
+						},
 
-        var queues_refresh_interval = setInterval(function () {
-          if ($('#main_dashboard').has($('#queues_table')).length > 0) {
-            queues_table.ajax.reload(null, false); // user paging is not reset on reload
-          }
-        }, 3000);
+					]
+				});
 
-      }
+				$('#confirmation').on('show.bs.modal', function (event) {
+					var button = $(event.relatedTarget) // Button that triggered the modal
+					var queue_name = button.data('queue') // Extract info from data-* attributes
+					var action = button.data('action')
+					var modal = $(this)
+					if (action === 'empty') {
+						modal.find('.modal-title').text('Confirm to empty ' + queue_name)
+						modal.attr('name', queue_name)
+						modal.attr('task', 'empty')
+						modal.find('.modal-body').text('All valid jobs currently on queue will be removed!')
+					} else {
+						modal.find('.modal-title').text('Confirm to delete ' + queue_name)
+						modal.attr('name', queue_name)
+						modal.attr('task', 'delete')
+						modal.find('.modal-body').text('Queue will be deleted along with all jobs on it!')
+					}
+				})
 
-      function setup_jobs_datatable() {
-        var job_result_ttl = "specifies how long (in seconds) successful jobs and their results are kept. Expired jobs will be automatically deleted. Defaults to 500 seconds.";
-        var job_timeout = "specifies the maximum runtime of the job before it’s interrupted and marked as failed. Its default unit is seconds and it can be an integer or a string representing an integer(e.g. 2, '2'). Furthermore, it can be a string with specify unit including hour, minute, second (e.g. '1h', '3m', '5s').";
-        var job_failure_ttl = " specifies how long (in seconds) failed jobs are kept (defaults to 1 year)";
-        var job_ttl = "specifies the maximum queued time (in seconds) of the job before it’s discarded. This argument defaults to None (infinite TTL).";
+				// restore modal state on closing
+				$("#confirmation").on("hidden.bs.modal", function () {
+					$(this).find('modal-title').trigger('reset');
+					$(this).find('name').trigger('reset');
+					$(this).find('.modal-footer').show();
+				});
 
-        function get_checked_queues() {
-          var queues = []
-          $('.queuelistitem').each(function (index) {
-            var active = $(this).find('input').prop("checked") ? 1 : 0;
-            if (active) {
-              queues.push($(this).find('label').text());
-            }
-          });
-          //alert(JSON.stringify(queues));
-          return queues;
-        }
+				$('#confirmation').on('click', '.confirm', function (event) {
+					var queue_id = $(this).closest('.modal').attr('name');
+					var task = $(this).closest('.modal').attr('task');
+					var modal = $(this).closest('.modal');
+					if(task == 'empty'){
+						$.ajax({
+						type: "GET",
+						url: "{{ url_for('rqmonitor.empty_queue_api') }}",
+						data: { 'queue_id': queue_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						dataType: "json",
+						success: function (response) {
+							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+							modal.find('.modal-body').html('Successfully emptied worker with id <strong>' + response.queue_id + '</strong>');
+							modal.find('.modal-footer').hide();
+							// force refresh to update
+							queues_table.ajax.reload(null, false);
+							setTimeout(function () {
+								$('#confirmation').modal('hide');
+							}, 2000);
 
-        function get_checked_job_status() {
-          var status = []
-          $('.jobstatuslistitem').each(function (index) {
-            var active = $(this).find('input').prop("checked") ? 1 : 0;
-            if (active) {
-              status.push($(this).find('label').text());
-            }
-          });
-          //alert(JSON.stringify(status));
-          return status;
-        }
+						},
+						error: function (rs, e) {
+							$('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+							// TODO show formatted error response from server
+							$('.modal-body').text('Unable to empty queue with id ' + queue_id);
+						}
+					});
+					}else{
+						$.ajax({
+						type: "GET",
+						url: "{{ url_for('rqmonitor.delete_queue_api') }}",
+						data: { 'queue_id': queue_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						dataType: "json",
+						success: function (response) {
+							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+							modal.find('.modal-body').html('Successfully deleted queue with id <strong>' + response.queue_id + '</strong>');
+							modal.find('.modal-footer').hide();
+							// force refresh to update
+							queues_table.ajax.reload(null, false);
+							setTimeout(function () {
+								$('#confirmation').modal('hide');
+							}, 2000);
 
-        var jobs_table = $('#jobs_table').DataTable({
-          //"serverSide": "True",
-          "processing": "True",
-          "language": {
-            "loadingRecords": "&nbsp;",
-            "processing": "Loading...",
-          },
-          "ajax": {
-            "url": "{{ url_for('list_jobs_api') }}",
-            "type": "GET",
-            // in case of reload if data is initialised as static object then will not
-            //be evaluated only once. If you want to read new data on each reload, you'd need to use it as a
-            //function. check @ comment at https://datatables.net/reference/api/ajax.reload()
-            "data": function (d) {
-              d.queues = get_checked_queues(),
-                d.jobstatus = get_checked_job_status(),
-                d.from_datatable = 'True',
-                d.csrfmiddlewaretoken = '{{ csrf_token }}'
-            },
-            "dataSrc": "data",
-            dataType: "json",
-          },
-          "columns": [
-            {
-              data: "job_info",
-              render: function (data, type, row, meta) {
-                //alert(Object.values(data));
-                if (type === 'display') {
-                  data = `
+						},
+						error: function (rs, e) {
+							$('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+							// TODO show formatted error response from server
+							$('.modal-body').text('Unable to delete queue with id ' + queue_id);
+						}
+					});		
+					}
+				})
+
+				var queues_refresh_interval = setInterval(function () {
+					if ($('#main_dashboard').has($('#queues_table')).length > 0) {
+						queues_table.ajax.reload(null, false); // user paging is not reset on reload
+					}
+				}, 3000);
+
+			}
+
+			function setup_jobs_datatable() {
+				var job_result_ttl = "specifies how long (in seconds) successful jobs and their results are kept. Expired jobs will be automatically deleted. Defaults to 500 seconds.";
+				var job_timeout = "specifies the maximum runtime of the job before it’s interrupted and marked as failed. Its default unit is seconds and it can be an integer or a string representing an integer(e.g. 2, '2'). Furthermore, it can be a string with specify unit including hour, minute, second (e.g. '1h', '3m', '5s').";
+				var job_failure_ttl = " specifies how long (in seconds) failed jobs are kept (defaults to 1 year)";
+				var job_ttl = "specifies the maximum queued time (in seconds) of the job before it’s discarded. This argument defaults to None (infinite TTL).";
+
+				function get_checked_queues() {
+					var queues = []
+					$('.queuelistitem').each(function (index) {
+						var active = $(this).find('input').prop("checked") ? 1 : 0;
+						if (active) {
+							queues.push($(this).find('label').text());
+						}
+					});
+					//alert(JSON.stringify(queues));
+					return queues;
+				}
+
+				function get_checked_job_status() {
+					var status = []
+					$('.jobstatuslistitem').each(function (index) {
+						var active = $(this).find('input').prop("checked") ? 1 : 0;
+						if (active) {
+							status.push($(this).find('label').text());
+						}
+					});
+					//alert(JSON.stringify(status));
+					return status;
+				}
+
+				var jobs_table = $('#jobs_table').DataTable({
+					//"serverSide": "True",
+					"processing": "True",
+					"language": {
+						"loadingRecords": "&nbsp;",
+						"processing": "Loading...",
+					},
+					"ajax": {
+						"url": "{{ url_for('rqmonitor.list_jobs_api') }}",
+						"type": "GET",
+						// in case of reload if data is initialised as static object then will not
+						//be evaluated only once. If you want to read new data on each reload, you'd need to use it as a
+						//function. check @ comment at https://datatables.net/reference/api/ajax.reload()
+						"data": function (d) {
+							d.queues = get_checked_queues(),
+								d.jobstatus = get_checked_job_status(),
+								d.from_datatable = 'True',
+								d.csrfmiddlewaretoken = '{{ csrf_token }}'
+						},
+						"dataSrc": "data",
+						dataType: "json",
+					},
+					"columns": [
+						{
+							data: "job_info",
+							render: function (data, type, row, meta) {
+								//alert(Object.values(data));
+								if (type === 'display') {
+									data = `
                     <div class="card">
                       <div class="card-body">
                         <h3 class="card-title">` + Object.values(data)[0] + `</h3>
                         <h6 class="card-subtitle mb-2 text-muted">` + Object.values(data)[1] + ` on` +
-                    `<span class="badge badge-success ml-6">` + Object.values(data)[5] + `</span>
+										`<span class="badge badge-success ml-6">` + Object.values(data)[5] + `</span>
                          with status
                           <span class="badge badge-success">` + Object.values(data)[4] + `</span>
                         </h6>
@@ -256,234 +342,234 @@
                       </div>
                     </div>
                     `
-                }
-                return data;
-              },
-              className: "worker_info_card_link"
-            },
-            {
-              data: "action",
-              width: "10%",
-              render: function (data, type, row, meta) {
-                if (type == 'display') {
-                  data =
-                    `
+								}
+								return data;
+							},
+							className: "worker_info_card_link"
+						},
+						{
+							data: "action",
+							width: "10%",
+							render: function (data, type, row, meta) {
+								if (type == 'display') {
+									data =
+										`
                   <a href="#" class="btn btn-outline-primary btn-block">Requeue</a>
                   <a href="#" class="btn btn-outline-warning btn-block">Cancel</a>
                   <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
                   `
-                }
-                return data;
-              },
-              defaultContent:
-                `
+								}
+								return data;
+							},
+							defaultContent:
+								`
               <a href="#" class="btn btn-outline-primary btn-block">Requeue</a>
               <a href="#" class="btn btn-outline-warning btn-block">Cancel</a>
               <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
               `
-            },
-          ]
-        });
+						},
+					]
+				});
 
 
-        var jobs_refresh_interval = setInterval(function () {
-          if ($('#main_dashboard').has('#jobs_table').length > 0) {
-            jobs_table.ajax.reload(null, false); // user paging is not reset on reload
-          }
-        }, 3000);
+				var jobs_refresh_interval = setInterval(function () {
+					if ($('#main_dashboard').has('#jobs_table').length > 0) {
+						jobs_table.ajax.reload(null, false); // user paging is not reset on reload
+					}
+				}, 3000);
 
-        $('#jobstatus').on('change', 'input[type="checkbox"]', function (event) {
-          jobs_table.ajax.reload(null, false);
-        });
+				$('#jobstatus').on('change', 'input[type="checkbox"]', function (event) {
+					jobs_table.ajax.reload(null, false);
+				});
 
-        $('#fromqueues').on('change', 'input[type="checkbox"]', function (event) {
-          jobs_table.ajax.reload(null, false);
-        });
+				$('#fromqueues').on('change', 'input[type="checkbox"]', function (event) {
+					jobs_table.ajax.reload(null, false);
+				});
 
-      }
+			}
 
-      function setup_worker_datatable() {
+			function setup_worker_datatable() {
 
-        worker_status = {
-          'idle': 'warning',
-          'busy': 'success',
-          'started': 'success',
-          'suspended': 'danger',
-        }
+				worker_status = {
+					'idle': 'warning',
+					'busy': 'success',
+					'started': 'success',
+					'suspended': 'danger',
+				}
 
-        var workers_table = $('#workers_table').DataTable({
-          "processing": "True",
-          "language": {
-            "loadingRecords": "&nbsp;",
-            "processing": "Loading...",
-          },
-          "ajax": {
-            "url": "{{ url_for('list_workers_api') }}",
-            "type": "GET",
-            "data": { 'from_datatable': 'True', 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-            "dataSrc": "data",
-            "dataType": "json",
-          },
-          "columns": [
-            {
-              data: "worker_name",
-              render: function (data, type, row, meta) {
-                if (type === 'display') {
-                  data = `
+				var workers_table = $('#workers_table').DataTable({
+					"processing": "True",
+					"language": {
+						"loadingRecords": "&nbsp;",
+						"processing": "Loading...",
+					},
+					"ajax": {
+						"url": "{{ url_for('rqmonitor.list_workers_api') }}",
+						"type": "GET",
+						"data": { 'from_datatable': 'True', 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						"dataSrc": "data",
+						"dataType": "json",
+					},
+					"columns": [
+						{
+							data: "worker_name",
+							render: function (data, type, row, meta) {
+								if (type === 'display') {
+									data = `
                         <a href="#" data-toggle="modal" data-target="#worker_info"
                         data-worker="`+ data + `">` + data + `</a>
                         `;
-                }
-                return data;
-              },
-              className: "worker_info_modal"
-            },
-            { data: "listening_on" },
-            {
-              data: "status",
-              render: function (data, type, row, meta) {
-                if (type === 'display') {
-                  data = `<span class="badge badge-` + worker_status[data] + `">` + data + `</span>`;
-                }
-                return data;
-              },
-            },
-            { data: "current_job_id" },
-            { data: "success_jobs" },
-            { data: "failed_jobs" },
-            {
-              data: null,
-              width: "10%",
-              render: function (data, type, row, meta) {
-                if (type === 'display') {
-                  data = `
-                  <a href="#" class="btn btn-dark" data-toggle="modal"
-                  data-target="#confirmation" data-worker="`+ row.worker_name + `"> Delete </a>
-                  `;
-                }
-                return data;
-              },
-              className: "center",
-              defaultContent: `
-              <a href="#" class="btn btn-dark" data-toggle="modal"
-               data-target="#confirmation"> Delete </a>
-              `,
-            }
-          ]
-        });
+								}
+								return data;
+							},
+							className: "worker_info_modal"
+						},
+						{ data: "listening_on" },
+						{
+							data: "status",
+							render: function (data, type, row, meta) {
+								if (type === 'display') {
+									data = `<span class="badge badge-` + worker_status[data] + `">` + data + `</span>`;
+								}
+								return data;
+							},
+						},
+						{ data: "current_job_id" },
+						{ data: "success_jobs" },
+						{ data: "failed_jobs" },
+						{
+							data: null,
+							width: "10%",
+							render: function (data, type, row, meta) {
+								if (type === 'display') {
+									data = `
+											<a href="#" class="btn btn-dark" data-toggle="modal"
+											data-target="#confirmation" data-worker="`+ row.worker_name + `"> Delete </a>
+											`;
+								}
+								return data;
+							},
+							className: "center",
+							defaultContent: `
+											<a href="#" class="btn btn-dark" data-toggle="modal"
+											data-target="#confirmation"> Delete </a>
+											`,
+						}
+					]
+				});
 
-        $('#confirmation').on('show.bs.modal', function (event) {
-          var button = $(event.relatedTarget) // Button that triggered the modal
-          var worker_name = button.data('worker') // Extract info from data-* attributes
-          var modal = $(this)
-          modal.find('.modal-title').text('Confirm to delete ' + worker_name)
-          modal.attr('name', worker_name)
-          //TODO add ability to send more signals
-          modal.find('.modal-body').text('The worker will receive SIGINT signal to accomplish warm shutdown\
-        any currently executing tasks will be completed first.')
-        })
+				$('#confirmation').on('show.bs.modal', function (event) {
+					var button = $(event.relatedTarget) // Button that triggered the modal
+					var worker_name = button.data('worker') // Extract info from data-* attributes
+					var modal = $(this)
+					modal.find('.modal-title').text('Confirm to delete ' + worker_name)
+					modal.attr('name', worker_name)
+					//TODO add ability to send more signals
+					modal.find('.modal-body').text('The worker will receive SIGINT signal to accomplish warm shutdown\
+        											any currently executing tasks will be completed first.')
+				})
 
-        // restore modal state on closing
-        $("#confirmation").on("hidden.bs.modal", function () {
-          $(this).find('modal-title').trigger('reset');
-          $(this).find('name').trigger('reset');
-          $(this).find('.modal-footer').show();
-        });
+				// restore modal state on closing
+				$("#confirmation").on("hidden.bs.modal", function () {
+					$(this).find('modal-title').trigger('reset');
+					$(this).find('name').trigger('reset');
+					$(this).find('.modal-footer').show();
+				});
 
-        $('#confirmation').on('click', '.delete_worker', function (event) {
-          var worker_id = $(this).closest('.modal').attr('name');
-          var modal = $(this).closest('.modal');
-          $.ajax({
-            type: "GET",
-            url: "{{ url_for('delete_single_worker_api') }}",
-            data: { 'worker_id': worker_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-            dataType: "json",
-            success: function (response) {
-              modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
-              modal.find('.modal-body').html('Successfully deleted worker with id <strong>' + response.worker_id + '</strong>');
-              modal.find('.modal-footer').hide();
-              // force refresh to update
-              workers_table.ajax.reload(null, false);
-              setTimeout(function () {
-                $('#confirmation').modal('hide');
-              }, 2000);
+				$('#confirmation').on('click', '.confirm', function (event) {
+					var worker_id = $(this).closest('.modal').attr('name');
+					var modal = $(this).closest('.modal');
+					$.ajax({
+						type: "GET",
+						url: "{{ url_for('rqmonitor.delete_single_worker_api') }}",
+						data: { 'worker_id': worker_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						dataType: "json",
+						success: function (response) {
+							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+							modal.find('.modal-body').html('Successfully deleted worker with id <strong>' + response.worker_id + '</strong>');
+							modal.find('.modal-footer').hide();
+							// force refresh to update
+							workers_table.ajax.reload(null, false);
+							setTimeout(function () {
+								$('#confirmation').modal('hide');
+							}, 2000);
 
-            },
-            error: function (rs, e) {
-              $('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
-              // TODO show formatted error response from server
-              $('.modal-body').text('Unable to delete worker with id ' + worker_id);
-            }
-          });
-        })
+						},
+						error: function (rs, e) {
+							$('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+							// TODO show formatted error response from server
+							$('.modal-body').text('Unable to delete worker with id ' + worker_id);
+						}
+					});
+				})
 
-        var table_refresh_interval = setInterval(function () {
-          if ($('#main_dashboard').has('#workers_table').length > 0) {
-            workers_table.ajax.reload(null, false); // user paging is not reset on reload
-          }
-        }, 3000);
+				var table_refresh_interval = setInterval(function () {
+					if ($('#main_dashboard').has('#workers_table').length > 0) {
+						workers_table.ajax.reload(null, false); // user paging is not reset on reload
+					}
+				}, 3000);
 
-        $('#worker_info').on('show.bs.modal', function (event) {
-          var button = $(event.relatedTarget); // Button that triggered the modal
-          var worker_id = button.data('worker'); // Extract info from data-* attributes
-          var modal = $(this);
+				$('#worker_info').on('show.bs.modal', function (event) {
+					var button = $(event.relatedTarget); // Button that triggered the modal
+					var worker_id = button.data('worker'); // Extract info from data-* attributes
+					var modal = $(this);
 
-          $.ajax({
-            url: "{{ url_for('worker_info_api') }}",
-            data: { 'worker_id': worker_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-            success: function (data) {
-              modal.find('.modal-title').text('Showing Info for ' + worker_id)
-              modal.attr('name', worker_id)
-              modal.find('#birth_date').text(data.worker_birth_date);
-              modal.find('#death_date').text(data.worker_death_date);
-              modal.find('#failed_job_count').text(data.worker_failed_job_count);
-              modal.find('#successful_job_count').text(data.worker_successful_job_count);
-              modal.find('#job_monitoring_interval').text(data.worker_job_monitoring_interval);
-              modal.find('#last_heartbeat').text(data.worker_last_heartbeat);
-              modal.find('#current_job_id').text(data.worker_current_job_id);
-              modal.find('#last_cleaned_at').text(data.worker_last_cleaned_at);
-              modal.find('#host_name').text(data.worker_host_name);
-              modal.find('#worker_ttl').text(data.worker_ttl);
-              modal.find('#result_ttl').text(data.worker_result_ttl);
-            },
-            error: function (rs, e) {
-              alert('here');
-              alert(rs.responseText);
-            }
-          });
-        });
+					$.ajax({
+						url: "{{ url_for('rqmonitor.worker_info_api') }}",
+						data: { 'worker_id': worker_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						success: function (data) {
+							modal.find('.modal-title').text('Showing Info for ' + worker_id)
+							modal.attr('name', worker_id)
+							modal.find('#birth_date').text(data.worker_birth_date);
+							modal.find('#death_date').text(data.worker_death_date);
+							modal.find('#failed_job_count').text(data.worker_failed_job_count);
+							modal.find('#successful_job_count').text(data.worker_successful_job_count);
+							modal.find('#job_monitoring_interval').text(data.worker_job_monitoring_interval);
+							modal.find('#last_heartbeat').text(data.worker_last_heartbeat);
+							modal.find('#current_job_id').text(data.worker_current_job_id);
+							modal.find('#last_cleaned_at').text(data.worker_last_cleaned_at);
+							modal.find('#host_name').text(data.worker_host_name);
+							modal.find('#worker_ttl').text(data.worker_ttl);
+							modal.find('#result_ttl').text(data.worker_result_ttl);
+						},
+						error: function (rs, e) {
+							alert('here');
+							alert(rs.responseText);
+						}
+					});
+				});
 
-        /*
-        $('#workers_table tbody').on('click', '.worker_info_modal', function () {
-          var row_clicked = workers_table.row($(this).parents('tr')).data();
-          worker_id = Object.values(row_clicked)[0];
-        });
-        */
-      }
-    </script>
+				/*
+				$('#workers_table tbody').on('click', '.worker_info_modal', function () {
+				  var row_clicked = workers_table.row($(this).parents('tr')).data();
+				  worker_id = Object.values(row_clicked)[0];
+				});
+				*/
+			}
+		</script>
 
-    <!-- Optional JavaScript -->
-    <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/slimscroll/jquery.slimscroll.js') }}"></script>
-    <script
-      src="{{ url_for('static', filename='assets/vendor/multi-select/js/jquery.multi-select.js') }}"></script>
+		<!-- Optional JavaScript -->
+		<script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.js') }}"></script>
+		<script src="{{ url_for('static', filename='assets/vendor/slimscroll/jquery.slimscroll.js') }}"></script>
+		<script src="{{ url_for('static', filename='assets/vendor/select2/js/select2.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='assets/vendor/multi-select/js/jquery.multi-select.js') }}"></script>
 
-    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
-    <script
-      src="{{ url_for('static', filename='assets/vendor/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
-    <script src="https://cdn.datatables.net/buttons/1.5.2/js/dataTables.buttons.min.js"></script>
-    <script
-      src="{{ url_for('static', filename='assets/vendor/datatables/js/buttons.bootstrap4.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='assets/vendor/datatables/js/data-table.js') }}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.print.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.colVis.min.js"></script>
-    <script src="https://cdn.datatables.net/rowgroup/1.0.4/js/dataTables.rowGroup.min.js"></script>
-    <script src="https://cdn.datatables.net/select/1.2.7/js/dataTables.select.min.js"></script>
-    <script src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
-    <script src="{{ url_for('static', filename='assets/libs/js/main-js.js') }}"></script>
+		<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+		<script
+			src="{{ url_for('static', filename='assets/vendor/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
+		<script src="https://cdn.datatables.net/buttons/1.5.2/js/dataTables.buttons.min.js"></script>
+		<script
+			src="{{ url_for('static', filename='assets/vendor/datatables/js/buttons.bootstrap4.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='assets/vendor/datatables/js/data-table.js') }}"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+		<script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.html5.min.js"></script>
+		<script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.print.min.js"></script>
+		<script src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.colVis.min.js"></script>
+		<script src="https://cdn.datatables.net/rowgroup/1.0.4/js/dataTables.rowGroup.min.js"></script>
+		<script src="https://cdn.datatables.net/select/1.2.7/js/dataTables.select.min.js"></script>
+		<script src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
+		<script src="{{ url_for('static', filename='assets/libs/js/main-js.js') }}"></script>
 
-  </body>
+	</body>
 
 </html>
