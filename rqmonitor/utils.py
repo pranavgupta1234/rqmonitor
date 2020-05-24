@@ -7,8 +7,10 @@ from rq.registry import (StartedJobRegistry,
                          FailedJobRegistry,
                          DeferredJobRegistry,
                          ScheduledJobRegistry)
+from rqmonitor.exceptions import ActionFailed
 from rq.utils import utcformat
 import redis
+from urllib.parse import urlparse
 import json
 import os
 import signal
@@ -20,9 +22,6 @@ logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
 
-REDIS_RQ_HOST = 'localhost:6379'
-redis_connection = redis.Redis(host='localhost', port=6379)
-
 
 REGISTRIES = [StartedJobRegistry, FinishedJobRegistry,
               FailedJobRegistry, DeferredJobRegistry,
@@ -31,10 +30,48 @@ REGISTRIES = [StartedJobRegistry, FinishedJobRegistry,
 JobStatus = ['queued', 'finished', 'failed', 'started', 'deferred', 'scheduled']
 
 
+def create_redis_connection(redis_url):
+    return redis.Redis.from_url(redis_url)
+
 def send_signal_worker(worker_id):
-    worker_instance = Worker.find_by_key(Worker.redis_worker_namespace_prefix+worker_id,
-                                         connection=redis_connection)
+    worker_instance = Worker.find_by_key(Worker.redis_worker_namespace_prefix+worker_id)
     worker_instance.request_stop(signum=2, frame=5)
+
+
+def delete_queue(queue_id):
+    """
+    :param queue_id: Queue ID/name to delete
+    :return: None
+
+    As no specific exception is raised for below method
+    we are using general Exception class for now
+    """
+    def attach_rq_queue_prefix(queue_id):
+        return Queue.redis_queue_namespace_prefix + queue_id
+
+    try:
+        queue_instance = Queue.from_queue_key(attach_rq_queue_prefix(queue_id))
+        queue_instance.delete()
+    except Exception as e:
+        raise ActionFailed
+
+
+def empty_queue(queue_id):
+    """
+    :param queue_id: Queue ID/name to delete
+    :return: None
+
+    As no specific exception is raised for below method
+    we are using general Exception class for now
+    """
+    def attach_rq_queue_prefix(queue_id):
+        return Queue.redis_queue_namespace_prefix + queue_id
+
+    try:
+        queue_instance = Queue.from_queue_key(attach_rq_queue_prefix(queue_id))
+        queue_instance.empty()
+    except Exception as e:
+        raise ActionFailed
 
 
 def delete_worker(worker_id, signal_to_pass=signal.SIGINT):
@@ -47,9 +84,11 @@ def delete_worker(worker_id, signal_to_pass=signal.SIGINT):
     :return:
     """
     # find worker instance by key, refreshes worker implicitly
+    def attach_rq_worker_prefix(worker_id):
+        return Worker.redis_worker_namespace_prefix + worker_id
+
     try:
-        worker_instance = Worker.find_by_key(Worker.redis_worker_namespace_prefix + worker_id,
-                                         connection=redis_connection)
+        worker_instance = Worker.find_by_key(attach_rq_worker_prefix(worker_id))
         os.kill(worker_instance.pid, signal_to_pass)
     except ValueError:
         logger.warning(f'Unable to find worker with ID {worker_id}')
@@ -62,7 +101,7 @@ def list_all_queues():
     """
     :return: Iterable for all available queue instances
     """
-    return Queue.all(connection=redis_connection)
+    return Queue.all()
 
 
 def list_all_possible_job_status():
@@ -118,10 +157,9 @@ def get_queue(queue):
 
     if isinstance(queue, str):
         if queue.startswith(Queue.redis_queue_namespace_prefix):
-            return Queue.from_queue_key(queue, connection=redis_connection)
+            return Queue.from_queue_key(queue)
         else:
-            return Queue.from_queue_key(Queue.redis_queue_namespace_prefix+queue,
-                                        connection=redis_connection)
+            return Queue.from_queue_key(Queue.redis_queue_namespace_prefix+queue)
 
     raise TypeError(f'{queue} is not of class {str} or {Queue}')
 
@@ -157,18 +195,18 @@ def list_jobs_in_queue_registry(queue, registry):
     queue = get_queue(queue)
     if registry == StartedJobRegistry:
         job_ids = queue.started_job_registry.get_job_ids()
-        return [Job.fetch(job_id, connection=redis_connection) for job_id in job_ids]
+        return [Job.fetch(job_id) for job_id in job_ids]
     elif registry == FinishedJobRegistry:
         job_ids = queue.finished_job_registry.get_job_ids()
-        return [Job.fetch(job_id, connection=redis_connection) for job_id in job_ids]
+        return [Job.fetch(job_id) for job_id in job_ids]
     elif registry == FailedJobRegistry:
         job_ids = queue.failed_job_registry.get_job_ids()
-        return [Job.fetch(job_id, connection=redis_connection) for job_id in job_ids]
+        return [Job.fetch(job_id) for job_id in job_ids]
     elif registry == DeferredJobRegistry:
         job_ids = queue.deferred_job_registry.get_job_ids()
-        return [Job.fetch(job_id, connection=redis_connection) for job_id in job_ids]
+        return [Job.fetch(job_id) for job_id in job_ids]
     elif registry == ScheduledJobRegistry:
         job_ids = queue.scheduled_job_registry.get_job_ids()
-        return [Job.fetch(job_id, connection=redis_connection) for job_id in job_ids]
+        return [Job.fetch(job_id) for job_id in job_ids]
     else:
         raise TypeError(f'{registry} : Invalid Registry class supplied')
