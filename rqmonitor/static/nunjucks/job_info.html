@@ -1,0 +1,29 @@
+<div class="card">
+	<div class="card-body">
+		<h3 class="card-title">{{ job_data.job_id }} </h3>
+		<h6 class="card-subtitle mb-2 text-muted"> {{ job_data.job_description }} </h6>
+		{% if job_data.job_exc_info %}
+		<div class="alert alert-danger" role="alert">
+			<p class="card-text">
+				{{ job_data.job_exc_info }}
+			</p>
+		</div>
+		{% endif %}
+		<button type="button" class="btn btn-primary btn-sm" data-toggle="popover" title data-content="`+ job_ttl + `"
+			data-original-title="ttl">
+			Job TTL <span class="badge badge-light">data</span>
+		</button>
+		<button type="button" class="btn btn-primary btn-sm" data-toggle="popover" title
+			data-content="" data-original-title="timeout">
+			Timeout <span class="badge badge-light">data</span>
+		</button>
+		<button type="button" class="btn btn-primary btn-sm" data-toggle="popover" title
+			data-content="" data-original-title=result ttl>
+			Result TTL <span class="badge badge-light">data</span>
+		</button>
+		<button type="button" class="btn btn-primary btn-sm" data-toggle="popover" title
+			data-content="" data-original-title="failure ttl">
+			Failure TTL <span class="badge badge-light">data</span>
+		</button>
+	</div>
+</div>
