@@ -86,25 +86,25 @@ def home(instance_number):
                            redis_instance_list=current_app.config.get('RQ_MONITOR_REDIS_URL'))
 
 
-@monitor_blueprint.route('/jobs_dashboard/')
+@monitor_blueprint.route('/jobs_dashboard')
 @cache_control_no_store
 def get_jobs_dashboard():
     return render_template('rqmonitor/jobs.html', rq_host_url= REDIS_RQ_HOST)
 
 
-@monitor_blueprint.route('/workers_dashboard/')
+@monitor_blueprint.route('/workers_dashboard')
 @cache_control_no_store
 def get_workers_dashboard():
     return render_template('rqmonitor/workers.html', rq_host_url= REDIS_RQ_HOST)
 
 
-@monitor_blueprint.route('/queues_dashboard/')
+@monitor_blueprint.route('/queues_dashboard')
 @cache_control_no_store
 def get_queues_dashboard():
     return render_template('rqmonitor/queues.html', rq_host_url=REDIS_RQ_HOST)
 
 
-@monitor_blueprint.route('/queues/')
+@monitor_blueprint.route('/queues')
 @cache_control_no_store
 def list_queues_api():
     queue_list = list_all_queues()
@@ -124,7 +124,7 @@ def list_queues_api():
     }
 
 
-@monitor_blueprint.route('/workers/')
+@monitor_blueprint.route('/workers')
 @cache_control_no_store
 def list_workers_api():
     workers_list = Worker.all()
@@ -148,7 +148,7 @@ def list_workers_api():
     }
 
 
-@monitor_blueprint.route('/jobs/')
+@monitor_blueprint.route('/jobs')
 @cache_control_no_store
 def list_jobs_api():
     """
@@ -182,7 +182,7 @@ def list_jobs_api():
         'data': job_data_for_dashboard,
     }
 
-@monitor_blueprint.route('/workers/delete/')
+@monitor_blueprint.route('/workers/delete')
 @cache_control_no_store
 def delete_single_worker_api():
     worker_id = request.args.get('worker_id')
@@ -199,7 +199,7 @@ def delete_single_worker_api():
     }
 
 
-@monitor_blueprint.route('/queues/delete/')
+@monitor_blueprint.route('/queues/delete')
 @cache_control_no_store
 def delete_queue_api():
     queue_id = request.args.get('queue_id', None)
@@ -215,7 +215,7 @@ def delete_queue_api():
     }
 
 
-@monitor_blueprint.route('/queues/empty/')
+@monitor_blueprint.route('/queues/empty')
 @cache_control_no_store
 def empty_queue_api():
     queue_id = request.args.get('queue_id', None)
@@ -231,7 +231,7 @@ def empty_queue_api():
     }
 
 
-@monitor_blueprint.route('/workers/info/')
+@monitor_blueprint.route('/workers/info')
 @cache_control_no_store
 def worker_info_api():
     worker_id = None
