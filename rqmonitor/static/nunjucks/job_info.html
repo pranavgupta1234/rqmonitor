@@ -1,29 +1,24 @@
 <div class="card">
+	<div class="card-header">
+		<div class="d-flex flex-row d-flex justify-content-between">
+			<div class="d-inline-flex p-0 mr-2">{{ job_data.job_id }}</div>
+			<div class="d-inline-flex p-0 mr-2">Created {{ job_data.job_created_time_humanize }}</div>
+			<div class="d-inline-flex p-0 mr-2">Enqueued {{ job_data.job_enqueued_time_humanize }}</div>
+		</div>
+	</div>
+	<div class="card-header">{{ job_data.job_description }}</div>
 	<div class="card-body">
-		<h3 class="card-title">{{ job_data.job_id }} </h3>
-		<h6 class="card-subtitle mb-2 text-muted"> {{ job_data.job_description }} </h6>
 		{% if job_data.job_exc_info %}
-		<div class="alert alert-danger" role="alert">
-			<p class="card-text">
-				{{ job_data.job_exc_info }}
-			</p>
+		<div class="alert alert-danger mb-0" style="white-space: pre-wrap" role="alert">{{ job_data.job_exc_info }}
 		</div>
 		{% endif %}
-		<button type="button" class="btn btn-primary btn-sm" data-toggle="popover" title data-content="`+ job_ttl + `"
-			data-original-title="ttl">
-			Job TTL <span class="badge badge-light">data</span>
-		</button>
-		<button type="button" class="btn btn-primary btn-sm" data-toggle="popover" title
-			data-content="" data-original-title="timeout">
-			Timeout <span class="badge badge-light">data</span>
-		</button>
-		<button type="button" class="btn btn-primary btn-sm" data-toggle="popover" title
-			data-content="" data-original-title=result ttl>
-			Result TTL <span class="badge badge-light">data</span>
-		</button>
-		<button type="button" class="btn btn-primary btn-sm" data-toggle="popover" title
-			data-content="" data-original-title="failure ttl">
-			Failure TTL <span class="badge badge-light">data</span>
-		</button>
+	</div>
+	<div class="card-footer">
+		<span class="mr-2"> <span class="badge-dot badge-primary"></span>Queued on <strong> {{ job_data.job_queue }} </strong></span>
+		<span class="mr-2"> <span class="badge-dot badge-brand"></span> Status <strong> {{ job_data.job_status }} </strong> </span>
+		<span class="mr-2"><span class="badge-dot  badge-secondary"></span> Job TTL <strong> {{ job_data.job_ttl }} </strong></span>
+		<span class="mr-2"><span class="badge-dot badge-success"></span> Job timeout <strong> {{ job_data.job_timeout }} </strong> </span>
+		<span class="mr-2"><span class="badge-dot badge-danger"></span> Job fail TTL <strong> {{ job_data.job_fail_ttl }} </strong> </span>
+		<span class="mr-2"> <span class="badge-dot badge-info"></span>Job Result TTL <strong> {{ job_data.job_result_ttl }} </strong></span>
 	</div>
 </div>
