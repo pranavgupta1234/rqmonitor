@@ -2,8 +2,6 @@
   <br>
   <a href="#"><img src="https://raw.githubusercontent.com/pranavgupta1234/rqmonitor/master/img/rqmonitor.png" alt="RQ Monitor" width="200"></a>
   <br>
-  RQMonitor
-  <br>
 </h1>
 
 <h4 align="center">RQ Monitor is Flask based more actionable and dynamic web frontend for monitoring your RQ.</h4>
