@@ -21,6 +21,9 @@
 		<link rel="stylesheet" type="text/css"
 			href="{{ url_for('static', filename='assets/vendor/datatables/css/fixedHeader.bootstrap4.css') }}">
 		<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+		<link href="https://cdn.datatables.net/buttons/1.6.2/css/buttons.dataTables.min.css" rel="stylesheet" />
+
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 	</head>
 
 	<body>
@@ -50,6 +53,16 @@
 			$(document).ready(function () {
 
 				$('#redis_instances').select2({ width: 'resolve' });
+
+				$('#redis_memory_refresh').on('click', function(){
+					$('#redis_memory_value').html('');
+					$.get({	
+						url: "{{ url_for('rqmonitor.redis_memory_api') }}",
+						cache: false
+					}).then(function( data ) {
+						$('#redis_memory_value').text(data.redis_memory_used)
+					});
+				});
 
 				$('#jobsmenu').on('show.bs.collapse', function (e) {
 					if ($(this).is(e.target)) {
@@ -248,7 +261,22 @@
 				var job_timeout = "specifies the maximum runtime of the job before it’s interrupted and marked as failed. Its default unit is seconds and it can be an integer or a string representing an integer(e.g. 2, '2'). Furthermore, it can be a string with specify unit including hour, minute, second (e.g. '1h', '3m', '5s').";
 				var job_failure_ttl = " specifies how long (in seconds) failed jobs are kept (defaults to 1 year)";
 				var job_ttl = "specifies the maximum queued time (in seconds) of the job before it’s discarded. This argument defaults to None (infinite TTL).";
-
+				var job_info_template;
+				
+				/*
+				from flask and jinja2's perspective all templates to be rendered by nunjucks 
+				can be considered as static files so kept in static folder and it also eases the 
+				task of generating urls 
+				*/
+				
+				$.get({	
+					url: "{{ url_for('static', filename='nunjucks/job_info.html') }}",
+					cache: false
+				}).then(function( data ) {
+					job_info_template = data;
+					//alert(job_info_template);
+				});
+				
 				function get_checked_queues() {
 					var queues = []
 					$('.queuelistitem').each(function (index) {
@@ -274,7 +302,8 @@
 				}
 
 				var jobs_table = $('#jobs_table').DataTable({
-					//"serverSide": "True",
+					"serverSide": "True",
+					"pageLength": 50,
 					"processing": "True",
 					"language": {
 						"loadingRecords": "&nbsp;",
@@ -299,49 +328,10 @@
 						{
 							data: "job_info",
 							render: function (data, type, row, meta) {
-								//alert(Object.values(data));
+								//alert(data['job_id']);
 								if (type === 'display') {
-									data = `
-                    <div class="card">
-                      <div class="card-body">
-                        <h3 class="card-title">` + Object.values(data)[0] + `</h3>
-                        <h6 class="card-subtitle mb-2 text-muted">` + Object.values(data)[1] + ` on` +
-										`<span class="badge badge-success ml-6">` + Object.values(data)[5] + `</span>
-                         with status
-                          <span class="badge badge-success">` + Object.values(data)[4] + `</span>
-                        </h6>
-                        <div class="alert alert-danger" role="alert">
-                          <p class="card-text">
-                            ` + Object.values(data)[2] + `
-                          </p>
-                          <p class="card-text">
-                            ` + Object.values(data)[3] + `
-                          </p>
-                        </div>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="popover"
-                        title data-content="`+ job_ttl + `"
-                        data-original-title="ttl">
-                          Job TTL <span class="badge badge-light">` + Object.values(data)[6] + `</span>
-                        </button>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="popover"
-                        title data-content="`+ job_timeout + `"
-                        data-original-title="timeout">
-                          Timeout <span class="badge badge-light">` + Object.values(data)[7] + `</span>
-                        </button>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="popover"
-                        title data-content="`+ job_result_ttl + `"
-                        data-original-title=result ttl>
-                          Result TTL <span class="badge badge-light">` + Object.values(data)[8] + `</span>
-                        </button>
-                        <button type="button" class="btn btn-primary btn-sm" data-toggle="popover"
-                        title data-content="`+ job_failure_ttl + `"
-                        data-original-title="failure ttl">
-                          Failure TTL <span class="badge badge-light">` + Object.values(data)[9] + `</span>
-                        </button>
-
-                      </div>
-                    </div>
-                    `
+									//data = nunjucks.render("{{ url_for('static', filename='nunjucks/job_info.html') }}", data)
+									data = nunjucks.renderString(job_info_template, {'job_data': data});
 								}
 								return data;
 							},
@@ -352,25 +342,142 @@
 							width: "10%",
 							render: function (data, type, row, meta) {
 								if (type == 'display') {
-									data =
+									// implement through nunjucks TODO
+									if (row.job_info.job_status === "failed"){
+										data =
 										`
-                  <a href="#" class="btn btn-outline-primary btn-block">Requeue</a>
-                  <a href="#" class="btn btn-outline-warning btn-block">Cancel</a>
-                  <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
-                  `
+										<a href="#" class="btn btn-warning btn-block" data-action="requeue"
+											data-toggle="modal" data-target="#confirmation" data-job="`+ row.job_info.job_id + `" data-jobqueue="`+ row.job_info.job_queue + `">Requeue</a>
+										<a href="#" class="btn btn-danger btn-block" data-action="delete"
+											data-toggle="modal" data-target="#confirmation" data-job="`+ row.job_info.job_id + `" data-jobqueue="`+ row.job_info.job_queue + `">Delete</a>
+										`
+									}else{
+										data =
+										`
+										<a href="#" class="btn btn-warning btn-block" data-action="requeue"
+											data-toggle="modal" data-target="#confirmation" data-job="`+ row.job_info.job_id + `" data-jobqueue="`+ row.job_info.job_queue + `">Cancel</a>
+										<a href="#" class="btn btn-danger btn-block" data-action="delete"
+											data-toggle="modal" data-target="#confirmation" data-job="`+ row.job_info.job_id + `" data-jobqueue="`+ row.job_info.job_queue + `">Delete</a>
+										`
+									}
 								}
 								return data;
 							},
 							defaultContent:
 								`
-              <a href="#" class="btn btn-outline-primary btn-block">Requeue</a>
-              <a href="#" class="btn btn-outline-warning btn-block">Cancel</a>
-              <a href="#" class="btn btn-outline-danger btn-block">Delete</a>
-              `
+								<a href="#" class="btn btn-warning btn-block">Requeue/Cancel</a>
+								<a href="#" class="btn btn-danger btn-block">Delete</a>
+								`
 						},
 					]
 				});
 
+
+				$('#confirmation').on('show.bs.modal', function (event) {
+					var button = $(event.relatedTarget) // Button that triggered the modal
+					var job_id = button.data('job') // Extract info from data-* attributes
+					var action = button.data('action')
+					var jobqueue = button.data('jobqueue')
+					var modal = $(this)
+					if (action === 'requeue') {
+						modal.find('.modal-title').text('Confirm to requeue ' + job_id)
+						modal.attr('name', job_id)
+						modal.attr('task', 'requeue')
+						modal.find('.modal-body').text('Job will be removed from failed job registry and put on '+ jobqueue)
+					} else if(action === 'delete') {
+						modal.find('.modal-title').text('Confirm to delete ' + job_id)
+						modal.attr('name', job_id)
+						modal.attr('task', 'delete')
+						modal.find('.modal-body').text('Job will be permanently deleted from Redis!')
+					} else if(action == "cancel"){
+						modal.find('.modal-title').text('Confirm to cancel ' + job_id)
+						modal.attr('name', job_id)
+						modal.attr('task', 'cancel')
+						modal.find('.modal-body').text('Job will be cancelled and never be executed or inspected!')
+					}
+				})
+
+				// restore modal state on closing
+				$("#confirmation").on("hidden.bs.modal", function () {
+					$(this).find('modal-title').trigger('reset');
+					$(this).find('name').trigger('reset');
+					$(this).find('.modal-footer').show();
+				});
+
+				$('#confirmation').on('click', '.confirm', function (event) {
+					var job_id = $(this).closest('.modal').attr('name');
+					var task = $(this).closest('.modal').attr('task');
+					var modal = $(this).closest('.modal');
+					if(task === 'requeue'){
+						$.ajax({
+						type: "GET",
+						url: "{{ url_for('rqmonitor.requeue_job_api') }}",
+						data: { 'job_id': job_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						dataType: "json",
+						success: function (response) {
+							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+							modal.find('.modal-body').html('Successfully requeued job with id ' + response.job_id + '</strong>');
+							modal.find('.modal-footer').hide();
+							// force refresh to update
+							queues_table.ajax.reload(null, false);
+							setTimeout(function () {
+								$('#confirmation').modal('hide');
+							}, 2000);
+
+						},
+						error: function (rs, e) {
+							$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+							// TODO show formatted error response from server
+							$('.modal-body').html('Unable to requeue job with id ' + job_id);
+						}
+					});
+					}else if(task === "delete"){
+						$.ajax({
+						type: "GET",
+						url: "{{ url_for('rqmonitor.delete_job_api') }}",
+						data: { 'job_id': job_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						dataType: "json",
+						success: function (response) {
+							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+							modal.find('.modal-body').html('Successfully deleted job with id <strong>' + response.job_id + '</strong>');
+							modal.find('.modal-footer').hide();
+							// force refresh to update
+							queues_table.ajax.reload(null, false);
+							setTimeout(function () {
+								$('#confirmation').modal('hide');
+							}, 2000);
+
+						},
+						error: function (rs, e) {
+							$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+							// TODO show formatted error response from server
+							$('.modal-body').html('Unable to delete job with id ' + job_id);
+						}
+					});		
+					} else if (task === "cancel"){
+						$.ajax({
+						type: "GET",
+						url: "{{ url_for('rqmonitor.cancel_job_api') }}",
+						data: { 'job_id': job_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						dataType: "json",
+						success: function (response) {
+							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+							modal.find('.modal-body').html('Successfully deleted job with id <strong>' + response.job_id + '</strong>');
+							modal.find('.modal-footer').hide();
+							// force refresh to update
+							queues_table.ajax.reload(null, false);
+							setTimeout(function () {
+								$('#confirmation').modal('hide');
+							}, 2000);
+
+						},
+						error: function (rs, e) {
+							$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+							// TODO show formatted error response from server
+							$('.modal-body').html('Unable to delete job with id ' + job_id);
+						}
+					}
+				})
 
 				var jobs_refresh_interval = setInterval(function () {
 					if ($('#main_dashboard').has('#jobs_table').length > 0) {
@@ -443,7 +550,7 @@
 							render: function (data, type, row, meta) {
 								if (type === 'display') {
 									data = `
-											<a href="#" class="btn btn-dark" data-toggle="modal"
+											<a href="#" class="btn btn-danger" data-toggle="modal"
 											data-target="#confirmation" data-worker="`+ row.worker_name + `"> Delete </a>
 											`;
 								}
@@ -451,7 +558,7 @@
 							},
 							className: "center",
 							defaultContent: `
-											<a href="#" class="btn btn-dark" data-toggle="modal"
+											<a href="#" class="btn btn-danger" data-toggle="modal"
 											data-target="#confirmation"> Delete </a>
 											`,
 						}
@@ -462,10 +569,15 @@
 					var button = $(event.relatedTarget) // Button that triggered the modal
 					var worker_name = button.data('worker') // Extract info from data-* attributes
 					var modal = $(this)
-					modal.find('.modal-title').text('Confirm to delete ' + worker_name)
+					if (!worker_name){
+						modal.find('.modal-title').text('Confirm to delete all workers')
+					}else{
+						modal.find('.modal-title').text('Confirm to delete ' + worker_name)
+					}
+					
 					modal.attr('name', worker_name)
 					//TODO add ability to send more signals
-					modal.find('.modal-body').text('The worker will receive SIGINT signal to accomplish warm shutdown\
+					modal.find('.modal-body').text('The worker/s will receive SIGINT signal to accomplish warm shutdown\
         											any currently executing tasks will be completed first.')
 				})
 
@@ -479,10 +591,14 @@
 				$('#confirmation').on('click', '.confirm', function (event) {
 					var worker_id = $(this).closest('.modal').attr('name');
 					var modal = $(this).closest('.modal');
+					var delete_all = false;
+					if (!worker_id){
+						delete_all = true;
+					}
 					$.ajax({
 						type: "GET",
-						url: "{{ url_for('rqmonitor.delete_single_worker_api') }}",
-						data: { 'worker_id': worker_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+						url: "{{ url_for('rqmonitor.delete_workers_api') }}",
+						data: { 'worker_id': worker_id, 'delete_all': delete_all, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
 						dataType: "json",
 						success: function (response) {
 							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
@@ -496,9 +612,9 @@
 
 						},
 						error: function (rs, e) {
-							$('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+							$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
 							// TODO show formatted error response from server
-							$('.modal-body').text('Unable to delete worker with id ' + worker_id);
+							$('.modal-body').html('Unable to delete worker! ' + JSON.stringify(rs) + e);
 						}
 					});
 				})
@@ -533,7 +649,6 @@
 							modal.find('#result_ttl').text(data.worker_result_ttl);
 						},
 						error: function (rs, e) {
-							alert('here');
 							alert(rs.responseText);
 						}
 					});
@@ -546,6 +661,7 @@
 				});
 				*/
 			}
+		
 		</script>
 
 		<!-- Optional JavaScript -->
@@ -553,7 +669,7 @@
 		<script src="{{ url_for('static', filename='assets/vendor/slimscroll/jquery.slimscroll.js') }}"></script>
 		<script src="{{ url_for('static', filename='assets/vendor/select2/js/select2.min.js') }}"></script>
 		<script src="{{ url_for('static', filename='assets/vendor/multi-select/js/jquery.multi-select.js') }}"></script>
-
+		<script src="{{ url_for('static', filename='assets/vendor/nunjucks/nunjucks.min.js') }}"></script>
 		<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
 		<script
 			src="{{ url_for('static', filename='assets/vendor/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
@@ -568,6 +684,8 @@
 		<script src="https://cdn.datatables.net/rowgroup/1.0.4/js/dataTables.rowGroup.min.js"></script>
 		<script src="https://cdn.datatables.net/select/1.2.7/js/dataTables.select.min.js"></script>
 		<script src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
+		<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+
 		<script src="{{ url_for('static', filename='assets/libs/js/main-js.js') }}"></script>
 
 	</body>
