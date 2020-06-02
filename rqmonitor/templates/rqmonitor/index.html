@@ -42,17 +42,37 @@
 				{% include 'rqmonitor/dashboard_wrapper.html'%}
 
 			</div>
-
+			{% include 'rqmonitor/confirmation_modal.html' %}
 		</div>
 
 		<script type="text/javascript">
 
-			//as this is all the js we have and mostly calls are ajax it seems better to directly 
-			// render urls here
+			var workers_table = null;
+			var queues_table = null;
+			var jobs_table = null;
 
 			$(document).ready(function () {
 
 				$('#redis_instances').select2({ width: 'resolve' });
+
+				$('#jobstatus').on('change', 'input[type="checkbox"]', function (event) {
+					jobs_table.ajax.reload(null, false);
+				});
+
+				$('#fromqueues').on('change', 'input[type="checkbox"]', function (event) {
+					jobs_table.ajax.reload(null, false);
+				});
+
+				var refresh_content = setInterval(function(){
+					if ($('#main_dashboard').has('#workers_table').length > 0 && workers_table != null) {
+						workers_table.ajax.reload(null, false); // user paging is not reset on reload
+					}else if ($('#main_dashboard').has($('#queues_table')).length > 0 && queues_table != null) {
+						queues_table.ajax.reload(null, false); // user paging is not reset on reload
+					}else if ($('#main_dashboard').has('#jobs_table').length > 0 && jobs_table != null) {
+						jobs_table.ajax.reload(null, false); // user paging is not reset on reload
+					}
+				}, 3000);
+
 
 				$('#redis_memory_refresh').on('click', function(){
 					$('#redis_memory_value').html('');
@@ -62,6 +82,16 @@
 					}).then(function( data ) {
 						$('#redis_memory_value').text(data.redis_memory_used)
 					});
+				});
+				
+
+				
+
+				// restore modal state on closing
+				$("#confirmation").on("hidden.bs.modal", function () {
+					$(this).find('modal-title').trigger('reset');
+					$(this).find('name').trigger('reset');
+					$(this).find('.modal-footer').show();
 				});
 
 				$('#jobsmenu').on('show.bs.collapse', function (e) {
@@ -118,7 +148,7 @@
 
 			function setup_queues_datatable() {
 
-				var queues_table = $('#queues_table').DataTable({
+				queues_table = $('#queues_table').DataTable({
 					"processing": "True",
 					"language": {
 						"loadingRecords": "&nbsp;",
@@ -169,6 +199,7 @@
 
 					]
 				});
+				
 
 				$('#confirmation').on('show.bs.modal', function (event) {
 					var button = $(event.relatedTarget) // Button that triggered the modal
@@ -188,12 +219,7 @@
 					}
 				})
 
-				// restore modal state on closing
-				$("#confirmation").on("hidden.bs.modal", function () {
-					$(this).find('modal-title').trigger('reset');
-					$(this).find('name').trigger('reset');
-					$(this).find('.modal-footer').show();
-				});
+				
 
 				$('#confirmation').on('click', '.confirm', function (event) {
 					var queue_id = $(this).closest('.modal').attr('name');
@@ -201,59 +227,52 @@
 					var modal = $(this).closest('.modal');
 					if(task == 'empty'){
 						$.ajax({
-						type: "GET",
-						url: "{{ url_for('rqmonitor.empty_queue_api') }}",
-						data: { 'queue_id': queue_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-						dataType: "json",
-						success: function (response) {
-							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
-							modal.find('.modal-body').html('Successfully emptied worker with id <strong>' + response.queue_id + '</strong>');
-							modal.find('.modal-footer').hide();
-							// force refresh to update
-							queues_table.ajax.reload(null, false);
-							setTimeout(function () {
-								$('#confirmation').modal('hide');
-							}, 2000);
+							type: "GET",
+							url: "{{ url_for('rqmonitor.empty_queue_api') }}",
+							data: { 'queue_id': queue_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+							dataType: "json",
+							success: function (response) {
+								modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+								modal.find('.modal-body').html('Successfully emptied worker with id <strong>' + response.queue_id + '</strong>');
+								modal.find('.modal-footer').hide();
+								// force refresh to update
+								queues_table.ajax.reload(null, false);
+								setTimeout(function () {
+									$('#confirmation').modal('hide');
+								}, 2000);
 
-						},
-						error: function (rs, e) {
-							$('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
-							// TODO show formatted error response from server
-							$('.modal-body').text('Unable to empty queue with id ' + queue_id);
-						}
-					});
+							},
+							error: function (rs, e) {
+								$('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+								// TODO show formatted error response from server
+								$('.modal-body').text('Unable to empty queue with id ' + queue_id);
+							}
+						});
 					}else{
 						$.ajax({
-						type: "GET",
-						url: "{{ url_for('rqmonitor.delete_queue_api') }}",
-						data: { 'queue_id': queue_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-						dataType: "json",
-						success: function (response) {
-							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
-							modal.find('.modal-body').html('Successfully deleted queue with id <strong>' + response.queue_id + '</strong>');
-							modal.find('.modal-footer').hide();
-							// force refresh to update
-							queues_table.ajax.reload(null, false);
-							setTimeout(function () {
-								$('#confirmation').modal('hide');
-							}, 2000);
+							type: "GET",
+							url: "{{ url_for('rqmonitor.delete_queue_api') }}",
+							data: { 'queue_id': queue_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+							dataType: "json",
+							success: function (response) {
+								modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+								modal.find('.modal-body').html('Successfully deleted queue with id <strong>' + response.queue_id + '</strong>');
+								modal.find('.modal-footer').hide();
+								// force refresh to update
+								queues_table.ajax.reload(null, false);
+								setTimeout(function () {
+									$('#confirmation').modal('hide');
+								}, 2000);
 
-						},
-						error: function (rs, e) {
-							$('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
-							// TODO show formatted error response from server
-							$('.modal-body').text('Unable to delete queue with id ' + queue_id);
-						}
-					});		
+							},
+							error: function (rs, e) {
+								$('.modal-title').text('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+								// TODO show formatted error response from server
+								$('.modal-body').text('Unable to delete queue with id ' + queue_id);
+							}
+						});		
 					}
 				})
-
-				var queues_refresh_interval = setInterval(function () {
-					if ($('#main_dashboard').has($('#queues_table')).length > 0) {
-						queues_table.ajax.reload(null, false); // user paging is not reset on reload
-					}
-				}, 3000);
-
 			}
 
 			function setup_jobs_datatable() {
@@ -301,7 +320,7 @@
 					return status;
 				}
 
-				var jobs_table = $('#jobs_table').DataTable({
+				jobs_table = $('#jobs_table').DataTable({
 					"serverSide": "True",
 					"pageLength": 50,
 					"processing": "True",
@@ -354,7 +373,7 @@
 									}else{
 										data =
 										`
-										<a href="#" class="btn btn-warning btn-block" data-action="requeue"
+										<a href="#" class="btn btn-warning btn-block" data-action="cancel"
 											data-toggle="modal" data-target="#confirmation" data-job="`+ row.job_info.job_id + `" data-jobqueue="`+ row.job_info.job_queue + `">Cancel</a>
 										<a href="#" class="btn btn-danger btn-block" data-action="delete"
 											data-toggle="modal" data-target="#confirmation" data-job="`+ row.job_info.job_id + `" data-jobqueue="`+ row.job_info.job_queue + `">Delete</a>
@@ -394,6 +413,21 @@
 						modal.attr('name', job_id)
 						modal.attr('task', 'cancel')
 						modal.find('.modal-body').text('Job will be cancelled and never be executed or inspected!')
+					} else if(action == "cancelall"){
+						modal.find('.modal-title').text('Confirm to cancel all jobs available on all queues!')
+						modal.attr('name', job_id)
+						modal.attr('task', 'cancel')
+						modal.find('.modal-body').text('Job will be cancelled and never be executed or inspected!')
+					} else if(action == "deleteall"){
+						modal.find('.modal-title').text('Confirm to delete all jobs from ' + get_checked_queues() + ' with status '+ get_checked_job_status())
+						modal.attr('name', job_id)
+						modal.attr('task', 'deleteall')
+						modal.find('.modal-body').text('Job will be deleted from redis forever!')
+					} else if(action == "requeueall"){
+						modal.find('.modal-title').text('Confirm to cancel ' + job_id)
+						modal.attr('name', job_id)
+						modal.attr('task', 'requeueall')
+						modal.find('.modal-body').text('Job will be cancelled and never be executed or inspected!')
 					}
 				})
 
@@ -410,89 +444,102 @@
 					var modal = $(this).closest('.modal');
 					if(task === 'requeue'){
 						$.ajax({
-						type: "GET",
-						url: "{{ url_for('rqmonitor.requeue_job_api') }}",
-						data: { 'job_id': job_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-						dataType: "json",
-						success: function (response) {
-							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
-							modal.find('.modal-body').html('Successfully requeued job with id ' + response.job_id + '</strong>');
-							modal.find('.modal-footer').hide();
-							// force refresh to update
-							queues_table.ajax.reload(null, false);
-							setTimeout(function () {
-								$('#confirmation').modal('hide');
-							}, 2000);
+							type: "GET",
+							url: "{{ url_for('rqmonitor.requeue_job_api') }}",
+							data: { 'job_id': job_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+							dataType: "json",
+							success: function (response) {
+								modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+								modal.find('.modal-body').html('Successfully requeued job with id ' + response.job_id + '</strong>');
+								modal.find('.modal-footer').hide();
+								// force refresh to update
+								queues_table.ajax.reload(null, false);
+								setTimeout(function () {
+									$('#confirmation').modal('hide');
+								}, 2000);
 
-						},
-						error: function (rs, e) {
-							$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
-							// TODO show formatted error response from server
-							$('.modal-body').html('Unable to requeue job with id ' + job_id);
-						}
-					});
+							},
+							error: function (rs, e) {
+								$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+								// TODO show formatted error response from server
+								$('.modal-body').html('Unable to requeue job with id ' + job_id);
+							}
+						});
 					}else if(task === "delete"){
 						$.ajax({
-						type: "GET",
-						url: "{{ url_for('rqmonitor.delete_job_api') }}",
-						data: { 'job_id': job_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-						dataType: "json",
-						success: function (response) {
-							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
-							modal.find('.modal-body').html('Successfully deleted job with id <strong>' + response.job_id + '</strong>');
-							modal.find('.modal-footer').hide();
-							// force refresh to update
-							queues_table.ajax.reload(null, false);
-							setTimeout(function () {
-								$('#confirmation').modal('hide');
-							}, 2000);
+							type: "GET",
+							url: "{{ url_for('rqmonitor.delete_job_api') }}",
+							data: { 'job_id': job_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+							dataType: "json",
+							success: function (response) {
+								modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+								modal.find('.modal-body').html('Successfully deleted job with id <strong>' + response.job_id + '</strong>');
+								modal.find('.modal-footer').hide();
+								// force refresh to update
+								queues_table.ajax.reload(null, false);
+								setTimeout(function () {
+									$('#confirmation').modal('hide');
+								}, 2000);
 
-						},
-						error: function (rs, e) {
-							$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
-							// TODO show formatted error response from server
-							$('.modal-body').html('Unable to delete job with id ' + job_id);
-						}
-					});		
+							},
+							error: function (rs, e) {
+								$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+								// TODO show formatted error response from server
+								$('.modal-body').html('Unable to delete job with id ' + job_id);
+							}
+						});		
 					} else if (task === "cancel"){
 						$.ajax({
-						type: "GET",
-						url: "{{ url_for('rqmonitor.cancel_job_api') }}",
-						data: { 'job_id': job_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-						dataType: "json",
-						success: function (response) {
-							modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
-							modal.find('.modal-body').html('Successfully deleted job with id <strong>' + response.job_id + '</strong>');
-							modal.find('.modal-footer').hide();
-							// force refresh to update
-							queues_table.ajax.reload(null, false);
-							setTimeout(function () {
-								$('#confirmation').modal('hide');
-							}, 2000);
+							type: "GET",
+							url: "{{ url_for('rqmonitor.cancel_job_api') }}",
+							data: { 'job_id': job_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+							dataType: "json",
+							success: function (response) {
+								modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+								modal.find('.modal-body').html('Successfully cancelled job with id <strong>' + response.job_id + '</strong>');
+								modal.find('.modal-footer').hide();
+								// force refresh to update
+								queues_table.ajax.reload(null, false);
+								setTimeout(function () {
+									$('#confirmation').modal('hide');
+								}, 2000);
 
-						},
-						error: function (rs, e) {
-							$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
-							// TODO show formatted error response from server
-							$('.modal-body').html('Unable to delete job with id ' + job_id);
-						}
+							},
+							error: function (rs, e) {
+								$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+								// TODO show formatted error response from server
+								$('.modal-body').html('Unable to delete job with id ' + job_id);
+							}
+						})
+					} else if (task === "deleteall"){
+						alert('here');
+						$.ajax({
+							type: "GET",
+							url: "{{ url_for('rqmonitor.delete_all_jobs_api') }}",
+							data: { 'queues': get_checked_queues(),
+									'jobstatus': get_checked_job_status(),							
+							 		'csrfmiddlewaretoken': '{{ csrf_token }}'
+							},
+							dataType: "json",
+							success: function (response) {
+								modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-success">Success</a>');
+								modal.find('.modal-body').html('Successfully deleted all jobs');
+								modal.find('.modal-footer').hide();
+								// force refresh to update
+								queues_table.ajax.reload(null, false);
+								setTimeout(function () {
+									$('#confirmation').modal('hide');
+								}, 2000);
+
+							},
+							error: function (rs, e) {
+								$('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
+								// TODO show formatted error response from server
+								$('.modal-body').html('Unable to delete job with id ' + job_id);
+							}
+						})
 					}
 				})
-
-				var jobs_refresh_interval = setInterval(function () {
-					if ($('#main_dashboard').has('#jobs_table').length > 0) {
-						jobs_table.ajax.reload(null, false); // user paging is not reset on reload
-					}
-				}, 3000);
-
-				$('#jobstatus').on('change', 'input[type="checkbox"]', function (event) {
-					jobs_table.ajax.reload(null, false);
-				});
-
-				$('#fromqueues').on('change', 'input[type="checkbox"]', function (event) {
-					jobs_table.ajax.reload(null, false);
-				});
-
 			}
 
 			function setup_worker_datatable() {
@@ -504,7 +551,7 @@
 					'suspended': 'danger',
 				}
 
-				var workers_table = $('#workers_table').DataTable({
+				workers_table = $('#workers_table').DataTable({
 					"processing": "True",
 					"language": {
 						"loadingRecords": "&nbsp;",
@@ -618,12 +665,6 @@
 						}
 					});
 				})
-
-				var table_refresh_interval = setInterval(function () {
-					if ($('#main_dashboard').has('#workers_table').length > 0) {
-						workers_table.ajax.reload(null, false); // user paging is not reset on reload
-					}
-				}, 3000);
 
 				$('#worker_info').on('show.bs.modal', function (event) {
 					var button = $(event.relatedTarget); // Button that triggered the modal
