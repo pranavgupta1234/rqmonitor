@@ -34,7 +34,7 @@
   <a href="#license">License</a>
 </p>
 
-![screenshot](img/demo.png)
+![screenshot](img/demo.gif)
 
 ## Key Features
 
