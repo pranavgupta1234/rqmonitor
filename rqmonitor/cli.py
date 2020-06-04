@@ -15,9 +15,9 @@ from urllib.parse import urlparse, parse_qs, unquote
 import click
 from flask import Flask, Response, request
 
-from defaults import RQ_MONITOR_REDIS_URL, RQ_MONITOR_REFRESH_INTERVAL
-from version import VERSION
-from bp import monitor_blueprint
+from rqmonitor.defaults import RQ_MONITOR_REDIS_URL, RQ_MONITOR_REFRESH_INTERVAL
+from rqmonitor.version import VERSION
+from rqmonitor.bp import monitor_blueprint
 
 
 logger = logging.getLogger("werkzeug")
@@ -262,7 +262,7 @@ def run(
     for url in redis_url:
         check_url(url)
 
-    app.run(host=bind, port=port, debug=debug)
+    app.run(host=bind, port=port, debug=True)
 
 
 def main():

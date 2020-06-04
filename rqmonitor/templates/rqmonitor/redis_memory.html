@@ -1,10 +1,11 @@
-<div class="navbar-redis-memory border border-primary ml-3">
-    <span class="mr-3">RQ Redis Memory</span>
-    <span class="mr-2">1.2GB</span>
-    <span class="traffic-sales-amount">
-        <span class="icon-circle-small icon-box-xs text-success ml-4 bg-success-light">
-            <i class="fa fa-fw fa-arrow-up"></i>
+<div class="navbar-redis-memory border border-primary p-1 ml-5">
+    <span class="ml-1">RQ Redis Memory</span>
+        <span class="ml-1 mt-2">
+            <img class="mb-1" height="32px" width="32px" src="{{ url_for('static', filename='assets/images/redis.png') }}"></img>
         </span>
-        <span class="ml-1 text-success">3.86%</span>
     </span>
+    <span id="redis_memory_value" class="ml-1">{{ redis_memory_used }}</span>
+    <a href="#" id="redis_memory_refresh" class="ml-2 mr-1">
+        <i class="fas fa-sync"></i>
+    </a>
 </div>

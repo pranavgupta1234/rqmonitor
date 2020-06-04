@@ -1,5 +1,13 @@
 <div class="container-fluid  dashboard-content">
   <div class="row">
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+      <button type="button" data-action="deleteall" data-toggle="modal" data-target="#confirmation"  
+      class="btn btn-danger float-right" data-targetclass="queue">Delete Selected Queues</button>
+      <button type="button" data-action="emptyall" data-toggle="modal" data-target="#confirmation"  
+      class="btn btn-warning float-right mr-2" data-targetclass="queue">Empty Selected Queues</button>
+    </div>
+  </div>
+  <div class="row">
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12" id="table_workers">
       <div class="card">
         <div class="card-body">
@@ -10,8 +18,4 @@
       </div>
     </div>
   </div>
-
-  <!-- Confirmation Queue Clear/Delete Modal -->
-  {% include 'rqmonitor/confirmation_modal.html' %}
-
 </div>

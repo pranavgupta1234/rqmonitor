@@ -5,7 +5,7 @@ import time
 import random
 import redis
 
-TOTAL_JOBS=500
+TOTAL_JOBS=500000
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
 JOB_TIMEOUT = 100 # keep greater than job processing time for testing
