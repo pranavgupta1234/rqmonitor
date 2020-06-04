@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <a href="#"><img src="https://raw.githubusercontent.com/pranavgupta1234/rqmonitor/master/img/rqmonitor.png" alt="RQ Monitor" width="200"></a>
+  <a href="#"><img src="https://raw.githubusercontent.com/pranavgupta1234/rqmonitor/master/img/rqmonitor.png" alt="RQ Monitor" height="300" width="300"></a>
   <br>
 </h1>
 
@@ -104,9 +104,11 @@ Options:
 
 This software majorly uses the following open source packages:
 
-- flask
-- rq
-- nunjucks
+- [flask](https://github.com/pallets/flask)
+- [DataTables](https://github.com/DataTables/DataTables)
+- [rq](https://github.com/rq/rq)
+- [nunjucks](https://mozilla.github.io/nunjucks/)
+- [Concept Admin Dashboard](https://github.com/puikinsh/concept)
 
 
 ## Contribute
