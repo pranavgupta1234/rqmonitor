@@ -11,6 +11,7 @@ from rq.registry import (StartedJobRegistry,
                          ScheduledJobRegistry)
 from rq.connections import resolve_connection
 from rq.utils import utcparse
+from rq.exceptions import InvalidJobOperationError
 from rqmonitor.exceptions import ActionFailed
 from datetime import datetime
 from itertools import zip_longest
@@ -313,6 +314,28 @@ def delete_all_jobs_in_queues_registries(queues, registries):
                 get_queue(queue).empty()
             else:
                 empty_registry(registry, queue)
+
+
+def requeue_all_jobs_in_failed_registry(queues):
+    fail_count = 0
+    for queue in queues:
+        failed_job_registry = get_queue(queue).failed_job_registry
+        job_ids = failed_job_registry.get_job_ids()
+
+        for job_id in job_ids:
+            try:
+                failed_job_registry.requeue(job_id)
+            except InvalidJobOperationError:
+                fail_count += 1
+
+    return fail_count
+
+
+def cancel_all_queued_jobs(queues):
+    for queue in queues:
+        job_ids = get_queue(queue).get_job_ids()
+        for job_id in job_ids:
+            Job.fetch(job_id).cancel()
 
 
 def job_count_in_queue_registry(queue, registry):
