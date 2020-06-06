@@ -1,9 +1,8 @@
-from django.shortcuts import render
-from rq.worker import Worker
-from rq.queue import Queue
-from rq.job import Job
-import traceback
 import humanize
+import redis
+import os
+import signal
+import logging
 from rq.registry import (StartedJobRegistry,
                          FinishedJobRegistry,
                          FailedJobRegistry,
@@ -14,14 +13,10 @@ from rq.utils import utcparse
 from rq.exceptions import InvalidJobOperationError
 from rqmonitor.exceptions import ActionFailed
 from datetime import datetime
-from itertools import zip_longest
-from rq.utils import utcformat
-import redis
-from urllib.parse import urlparse
-import json
-import os
-import signal
-import logging
+from rq.worker import Worker
+from rq.queue import Queue
+from rq.job import Job
+
 
 logger = logging.getLogger(__name__)
 stream_handler = logging.StreamHandler()
