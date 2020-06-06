@@ -29,6 +29,7 @@
             </div>
             {% include 'rqmonitor/confirmation_modal.html' %}
         </div>
+
         <script type="text/javascript">
 
             var workers_table = null;
@@ -45,7 +46,7 @@
 
             $(document).ready(function () {
 
-                function refresh_redis_memory(){
+                function refresh_redis_memory() {
                     $('#redis_memory_value').html('');
                     $.get({
                         url: "{{ url_for('rqmonitor.redis_memory_api') }}",
@@ -56,7 +57,7 @@
                     });
                 }
 
-                function reload_sidebar_queues(){
+                function reload_sidebar_queues() {
                     $.ajax({
                         type: "GET",
                         url: "{{ url_for('rqmonitor.refresh_sidebar_queues') }}",
@@ -70,24 +71,24 @@
                     });
                 }
 
-                function get_redis_instances_count(){
+                function get_redis_instances_count() {
                     return "{{ redis_instances_count }}"
                 }
 
-                function get_currently_selected_redis_index(){
+                function get_currently_selected_redis_index() {
                     return $('#redis_instances').prop('selectedIndex');
                 }
 
-                function inject_globals(data){
-                    if (data === undefined){
+                function inject_globals(data) {
+                    if (data === undefined) {
                         data = {}
                     }
                     return Object.assign(data,
-                            {
-                                'redis_instance_index': get_currently_selected_redis_index(),
-                                'csrfmiddlewaretoken': '{{ csrf_token }}'
-                            }
-                        );
+                        {
+                            'redis_instance_index': get_currently_selected_redis_index(),
+                            'csrfmiddlewaretoken': '{{ csrf_token }}'
+                        }
+                    );
                 }
 
                 function get_checked_queues() {
@@ -277,16 +278,16 @@
                     }
                 }
 
-                function on_redisinstance_change(){
-                    $('#redis_instances').on('change', function(){
+                function on_redisinstance_change() {
+                    $('#redis_instances').on('change', function () {
                         refresh_dashboard();
                         refresh_redis_memory();
                     })
                 }
 
-                
-                
-                $('#redis_instances').on('change', function(){
+
+
+                $('#redis_instances').on('change', function () {
                     //have to do a bunch of reload
                 })
 
@@ -302,7 +303,7 @@
                     }
                 });
 
-                
+
                 $('#redis_memory_refresh').on('click', function () {
                     refresh_redis_memory();
                 });
@@ -319,10 +320,10 @@
                             "url": "{{ url_for('rqmonitor.list_queues_api') }}",
                             "type": "GET",
                             "data": function (d) {
-                                        return $.extend(
-                                                {}, d, inject_globals(),                                            
-                                            )
-                                    },
+                                return $.extend(
+                                    {}, d, inject_globals(),
+                                )
+                            },
                             "dataSrc": "data",
                             "dataType": "json",
                         },
@@ -403,12 +404,12 @@
                             //be evaluated only once. If you want to read new data on each reload, you'd need to use it as a
                             //function. check @ comment at https://datatables.net/reference/api/ajax.reload()
                             "data": function (d) {
-                                    return $.extend(
-                                            {}, d, inject_globals(), {
-                                            'queues': get_checked_queues(),
-                                            'jobstatus': get_checked_job_status(), 
-                                            },                                            
-                                        )
+                                return $.extend(
+                                    {}, d, inject_globals(), {
+                                    'queues': get_checked_queues(),
+                                    'jobstatus': get_checked_job_status(),
+                                },
+                                )
                             },
                             "dataSrc": "data",
                             dataType: "json",
@@ -474,9 +475,9 @@
                             "url": "{{ url_for('rqmonitor.list_workers_api') }}",
                             "type": "GET",
                             "data": function (d) {
-                                    return $.extend(
-                                            {}, d, inject_globals(),                                            
-                                        )
+                                return $.extend(
+                                    {}, d, inject_globals(),
+                                )
                             },
                             "dataSrc": "data",
                             "dataType": "json",
@@ -566,7 +567,7 @@
                     */
                 }
 
-                
+
 
                 $('#jobsmenu').on('show.bs.collapse', function (e) {
                     if ($(this).is(e.target)) {
@@ -625,20 +626,16 @@
                 on_redisinstance_change();
             });
 
-
         </script>
 
-        <!-- Optional JavaScript -->
         <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.js') }}"></script>
         <script src="{{ url_for('static', filename='assets/vendor/select2/js/select2.min.js') }}"></script>
         <script src="{{ url_for('static', filename='assets/vendor/nunjucks/nunjucks.min.js') }}"></script>
         <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
         <script
             src="{{ url_for('static', filename='assets/vendor/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
-        <script
-            src="{{ url_for('static', filename='assets/vendor/datatables/js/buttons.bootstrap4.min.js') }}"></script>
-        <script src="{{ url_for('static', filename='assets/vendor/datatables/js/data-table.js') }}"></script>
 
+        <script src="{{ url_for('static', filename='assets/vendor/datatables/js/data-table.js') }}"></script>
     </body>
 
 </html>
