@@ -1,0 +1,8 @@
+# generated via pipreqs --savepath requirements.txt --force ./rqmonitor
+redis==3.3.11
+humanize==2.4.0
+Flask==1.1.1
+Click==7.0
+six==1.13.0
+Werkzeug==0.16.0
+rq==1.2.0
