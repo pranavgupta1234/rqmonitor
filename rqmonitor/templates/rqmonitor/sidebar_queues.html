@@ -1,0 +1,12 @@
+<ul class="nav flex-column">
+    {% for queue in rq_queues_list %}
+    <li class="nav-item queuelistitem">
+        <a class="nav-link" href="#">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" checked="checked" class="custom-control-input" id="{{queue}}">
+                <label class="custom-control-label active" for="{{queue}}">{{queue}}</label>
+            </div>
+        </a>
+    </li>
+   {% endfor %}
+</ul>
