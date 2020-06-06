@@ -16,6 +16,7 @@ from rqmonitor.utils import (
                             cancel_all_queued_jobs
 )
 
+from rqmonitor.defaults import RQ_MONITOR_REFRESH_INTERVAL
 from rq.connections import pop_connection, push_connection
 from rqmonitor.decorators import cache_control_no_store
 from rqmonitor.exceptions import RQMonitorException, ActionFailed
@@ -44,7 +45,6 @@ def handle_invalid_usage(error):
 @monitor_blueprint.before_app_first_request
 def setup_redis_connection():
     redis_url = current_app.config.get("RQ_MONITOR_REDIS_URL")
-    print(redis_url)
     if isinstance(redis_url, string_types):
         # update as tuple
         current_app.config["RQ_MONITOR_REDIS_URL"] = (redis_url,)
@@ -57,11 +57,21 @@ def setup_redis_connection():
 
 @monitor_blueprint.before_request
 def push_rq_connection():
-    new_instance_number = request.view_args.get("instance_number")
-    if new_instance_number is not None:
+    new_instance_index = None
+    if request.method == 'GET':
+        new_instance_index = request.args.get('redis_instance_index')
+    if request.method == 'POST':
+        new_instance_index = request.form.get('redis_instance_index')
+
+    if new_instance_index is None:
+        new_instance_index = request.view_args.get('redis_instance_index')
+
+    #print(new_instance_index, type(new_instance_index))
+    if new_instance_index is not None:
         redis_url = current_app.config.get("RQ_MONITOR_REDIS_URL")
-        if new_instance_number < len(redis_url):
-            new_instance = create_redis_connection(redis_url[new_instance_number])
+        new_instance_index = int(new_instance_index)
+        if int(new_instance_index) < len(redis_url):
+            new_instance = create_redis_connection(redis_url[new_instance_index])
         else:
             raise LookupError("Index exceeds RQ list. Not Permitted.")
     else:
@@ -75,9 +85,9 @@ def pop_rq_connection(exception=None):
     pop_connection()
 
 
-@monitor_blueprint.route('/', defaults={"instance_number": 0})
+@monitor_blueprint.route('/', defaults={"redis_instance_index": 0})
 @cache_control_no_store
-def home(instance_number):
+def home(redis_instance_index):
     rq_queues_list = list_all_queues_names()
     rq_possible_job_status = list_all_possible_job_status()
 
@@ -149,6 +159,14 @@ def list_workers_api():
         'rq_workers_count': len(rq_workers),
         'data': rq_workers,
     }
+
+
+@monitor_blueprint.route('queues/sidebar', methods=['GET'])
+@cache_control_no_store
+def refresh_sidebar_queues():
+    return render_template('rqmonitor/sidebar_queues.html',
+        rq_queues_list=list_all_queues_names()
+    )
 
 
 @monitor_blueprint.route('/jobs', methods=['GET'])
@@ -383,7 +401,6 @@ def delete_all_jobs_api():
     if request.method == 'POST':
         requested_queues = request.form.getlist('queues[]')
         requested_job_status = request.form.getlist('jobstatus[]')
-        print(requested_queues, requested_job_status)
 
         if requested_queues is None or requested_job_status is None:
             raise RQMonitorException('No queue/status selected', status_code=400)
@@ -443,3 +460,15 @@ def redis_memory_api():
     return {
         'redis_memory_used': get_redis_memory_used()
     }
+
+
+@monitor_blueprint.context_processor
+def inject_refresh_interval():
+    refresh_interval = current_app.config.get("RQ_MONITOR_REFRESH_INTERVAL",
+                                              RQ_MONITOR_REFRESH_INTERVAL)
+    return dict(refresh_interval=refresh_interval)
+
+
+@monitor_blueprint.context_processor
+def inject_redis_instances_count():
+    return dict(redis_instances_count=len(current_app.config["RQ_MONITOR_REDIS_URL"]))
