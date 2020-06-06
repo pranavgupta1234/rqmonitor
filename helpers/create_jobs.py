@@ -5,12 +5,12 @@ import time
 import random
 import redis
 
-TOTAL_JOBS=500000
+TOTAL_JOBS=5000
 REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
+REDIS_PORT = 6889
 JOB_TIMEOUT = 100 # keep greater than job processing time for testing
 
-queues = ['queue1', 'queue2', 'queue3', 'queue4', 'queue5', 'high', 'default', 'low']
+queues = ['queue11', 'queue21', 'queue31', 'queue41', 'queue51', 'high', 'default', 'low']
 
 #redis connection
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
