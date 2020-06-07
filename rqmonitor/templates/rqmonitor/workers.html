@@ -1,21 +1,8 @@
-<div class="container-fluid  dashboard-content">
-  <div class="row">
-    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-      <button data-toggle="modal" data-target="#confirmation" data-action="deleteall"
-      type="button" class="btn btn-danger float-right" data-targetclass="worker">Delete All Workers</button>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12" id="table_workers">
-      <div class="card">
-        <div class="card-body">
-          <div class="table-responsive">
-            {% include 'rqmonitor/table_workers.html' %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Worker Info Card Modal -->
-  {% include 'rqmonitor/worker_info_modal.html' %}
-</div>
+{% extends "rqmonitor/base_dashboard.html" %}
+{% block actionbuttons %}
+<button data-toggle="modal" data-target="#confirmation" data-action="deleteall"
+type="button" class="btn btn-danger float-right" data-targetclass="worker">Delete All Workers</button>
+{% endblock %}
+{% block table %}
+  {% include 'rqmonitor/table_workers.html' %}
+{% endblock %}

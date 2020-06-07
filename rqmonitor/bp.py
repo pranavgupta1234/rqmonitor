@@ -2,7 +2,8 @@ from flask import (
     current_app,
     render_template,
     request,
-    jsonify
+    jsonify,
+    url_for
 )
 from six import string_types
 from flask import Blueprint
@@ -90,13 +91,18 @@ def pop_rq_connection(exception=None):
 def home(redis_instance_index):
     rq_queues_list = list_all_queues_names()
     rq_possible_job_status = list_all_possible_job_status()
+    site_map = {}
+    for rule in current_app.url_map.iter_rules():
+        if "static" not in rule.endpoint:
+            site_map[rule.endpoint] = url_for(rule.endpoint)
 
     return render_template('rqmonitor/index.html',
                             rq_host_url= REDIS_RQ_HOST,
                             rq_queues_list= rq_queues_list,
                             rq_possible_job_status= rq_possible_job_status,
                             redis_instance_list=current_app.config.get('RQ_MONITOR_REDIS_URL'),
-                            redis_memory_used=get_redis_memory_used()
+                            redis_memory_used=get_redis_memory_used(),
+                            site_map=site_map
                            )
 
 

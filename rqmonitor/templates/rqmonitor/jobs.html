@@ -1,23 +1,12 @@
-<div class="container-fluid  dashboard-content">
-  <div class="row">
-    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-      <button type="button" data-action="requeueall" data-toggle="modal" data-target="#confirmation"  
-      class="btn btn-primary float-right" data-targetclass="job" >Requeue Failed Jobs</button>
-      <button type="button" data-action="cancelall" data-toggle="modal" data-target="#confirmation"  
-      class="btn btn-warning float-right mr-2" data-targetclass="job">Cancel Queued Jobs</button>
-      <button type="button" data-action="deleteall" data-toggle="modal" data-target="#confirmation" 
-      class="btn btn-danger float-right mr-2" data-targetclass="job">Delete All Jobs</button>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-      <div class="card">
-        <div class="card-body">
-          <div class="table-responsive">
-            {% include 'rqmonitor/table_jobs.html' %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+{% extends "rqmonitor/base_dashboard.html" %}
+{% block actionbuttons %}
+  <button type="button" data-action="requeueall" data-toggle="modal" data-target="#confirmation"  
+  class="btn btn-primary float-right" data-targetclass="job" >Requeue Failed Jobs</button>
+  <button type="button" data-action="cancelall" data-toggle="modal" data-target="#confirmation"  
+  class="btn btn-warning float-right mr-2" data-targetclass="job">Cancel Queued Jobs</button>
+  <button type="button" data-action="deleteall" data-toggle="modal" data-target="#confirmation" 
+  class="btn btn-danger float-right mr-2" data-targetclass="job">Delete All Jobs</button>
+{% endblock %}
+{% block table %}
+  {% include 'rqmonitor/table_jobs.html' %}
+{% endblock %}
