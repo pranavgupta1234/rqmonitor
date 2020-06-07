@@ -74,7 +74,7 @@ def push_rq_connection():
         if int(new_instance_index) < len(redis_url):
             new_instance = create_redis_connection(redis_url[new_instance_index])
         else:
-            raise LookupError("Index exceeds RQ list. Not Permitted.")
+            raise RQMonitorException("Invalid redis instance index!", status_code=400)
     else:
         new_instance = current_app.redis_connection
     push_connection(new_instance)

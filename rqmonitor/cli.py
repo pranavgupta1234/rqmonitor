@@ -41,7 +41,8 @@ def add_basic_auth(blueprint, username, password, realm="RQ Monitor"):
             )
 
 
-def create_app_with_blueprint(config, username, password, url_prefix, blueprint):
+def create_app_with_blueprint(config=None, username=None, password=None,
+                              url_prefix='', blueprint=monitor_blueprint):
     """Return Flask app with default configuration and registered blueprint."""
     app = Flask(__name__)
 
