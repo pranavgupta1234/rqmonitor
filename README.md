@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <a href="#"><img src="https://raw.githubusercontent.com/pranavgupta1234/rqmonitor/master/img/rqmonitor.png" alt="RQ Monitor" height="300" width="300"></a>
+  <a href="#"><img src="https://raw.githubusercontent.com/pranavgupta1234/rqmonitor/master/artifacts/rqmonitor.png" alt="RQ Monitor" height="300" width="300"></a>
   <br>
 </h1>
 
@@ -34,7 +34,7 @@
   <a href="#license">License</a>
 </p>
 
-![screenshot](img/demo.gif)
+![screenshot](artifacts/demo.gif)
 
 ## Key Features
 

@@ -44,74 +44,27 @@
             $(document).ready(function () {
 
                 site_map = JSON.parse('{{ site_map|tojson }}');                
-       
-                function get_redis_instances_count() {
-                    return "{{ redis_instances_count }}"
-                }
                 
                 var redis_instances = $('#redis_instances').select2({ width: 'resolve' });
+                
+                //setup queues datatable on home page
+                setup_queues_datatable(site_map);
 
-                //var refresh_content = setInterval(refresh_dashboard, "{{ refresh_interval }}");
-      
-                // setup event listners 
+                // setup event listeners 
                 on_job_status_selection_change();
                 on_queue_selection_change();
-                on_redis_instance_change(site_map['rqmonitor.redis_memory_api']);
-                on_redis_memory_refresh(site_map['rqmonitor.redis_memory_api'])
-                action_modal_onshow('#confirmation');
-                action_modal_onconfirm('#confirmation', site_map);
+                on_redis_instance_change(site_map);
+                on_redis_memory_refresh(site_map);
+                action_modal_onshow();
+                action_modal_onconfirm(site_map);
                 modal_restore();
+                on_click_jobs_dashboard("{{ url_for('static', filename='nunjucks/job_info.html') }}", site_map);
+                on_click_workers_dashboard(site_map);
+                on_click_queues_dashboard(site_map);
+                
+                var refresh_content = setInterval(refresh_dashboard, "{{ refresh_interval }}");
 
-                //reload_sidebar_queues("{{ url_for('rqmonitor.refresh_sidebar_queues') }}");
 
-
-                $('#jobsmenu').on('show.bs.collapse', function (e) {
-                    if ($(this).is(e.target)) {
-                        $.ajax({
-                            type: "GET",
-                            url: "{{ url_for('rqmonitor.get_jobs_dashboard') }}",
-                            data: inject_globals(),
-                            success: function (response) {
-                                $('#main_dashboard').html(response);
-                                setup_jobs_datatable("{{ url_for('static', filename='nunjucks/job_info.html') }}",
-                                "{{ url_for('rqmonitor.list_jobs_api') }}");
-                            },
-                            error: function (rs, e) {
-                                $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
-                            }
-                        });
-                    }
-                });
-
-                $('#workers_link').on('click', function () {
-                    $.ajax({
-                        type: "GET",
-                        url: "{{ url_for('rqmonitor.get_workers_dashboard') }}",
-                        data: inject_globals(),
-                        success: function (response) {
-                            $('#main_dashboard').html(response);
-                            setup_worker_datatable("{{ url_for('rqmonitor.list_workers_api') }}");
-                        },
-                        error: function (rs, e) {
-                            $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
-                        }
-                    });
-                });
-
-                $('#queues_link').on('click', function () {
-                    $.ajax({
-                        type: "GET",
-                        url: "{{ url_for('rqmonitor.get_queues_dashboard') }}",
-                        data: inject_globals(),
-                        success: function (response) {
-                            $('#main_dashboard').html(response);
-                            setup_queues_datatable("{{ url_for('rqmonitor.list_queues_api') }}");
-                        },
-                        error: function (rs, e) {
-                            $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
-                        }
-                    });
-                });              
             });
 
         </script>

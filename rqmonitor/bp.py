@@ -97,12 +97,12 @@ def home(redis_instance_index):
             site_map[rule.endpoint] = url_for(rule.endpoint)
 
     return render_template('rqmonitor/index.html',
-                            rq_host_url= REDIS_RQ_HOST,
-                            rq_queues_list= rq_queues_list,
-                            rq_possible_job_status= rq_possible_job_status,
-                            redis_instance_list=current_app.config.get('RQ_MONITOR_REDIS_URL'),
-                            redis_memory_used=get_redis_memory_used(),
-                            site_map=site_map
+                                rq_host_url= REDIS_RQ_HOST,
+                                rq_queues_list= rq_queues_list,
+                                rq_possible_job_status= rq_possible_job_status,
+                                redis_instance_list=current_app.config.get('RQ_MONITOR_REDIS_URL'),
+                                redis_memory_used=get_redis_memory_used(),
+                                site_map=site_map
                            )
 
 

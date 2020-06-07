@@ -31,7 +31,6 @@ function modal_error(modal, response) {
 }
 
 function refresh_dashboard() {
-    //reload_sidebar_queues();
     if ($('#main_dashboard').has('#workers_table').length > 0 && workers_table != null) {
         workers_table.ajax.reload(null, false); // user paging is not reset on reload
     } else if ($('#main_dashboard').has($('#queues_table')).length > 0 && queues_table != null) {
@@ -70,8 +69,8 @@ function modal_restore() {
     });
 }
 
-function action_modal_onshow(modal_selector) {
-    $(modal_selector).on('show.bs.modal', function (event) {
+function action_modal_onshow() {
+    $('#confirmation').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget)             // Button that triggered the modal
         var target_class = button.data('targetclass')   // Extract job/queue/worker
         var target_id = button.data('id')               // Extract job id/ queue id/ worker id   
@@ -139,7 +138,7 @@ function get_currently_selected_redis_index() {
 }
 
 
-function setup_queues_datatable(url) {
+function setup_queues_datatable(site_map) {
 
     queues_table = $('#queues_table').DataTable({
         "processing": "True",
@@ -148,7 +147,7 @@ function setup_queues_datatable(url) {
             "processing": "Loading...",
         },
         "ajax": {
-            "url": url,
+            "url": site_map['rqmonitor.list_queues_api'],
             "type": "GET",
             "data": function (d) {
                 return $.extend(
@@ -200,10 +199,10 @@ function setup_queues_datatable(url) {
 
 }
 
-function reload_sidebar_queues(url) {
+function reload_sidebar_queues(site_map) {
     $.ajax({
         type: "GET",
-        url: url,
+        url: site_map['rqmonitor.refresh_sidebar_queues'],
         data: inject_globals(),
         success: function (response) {
             $('#sidebar_queues').html(response);
@@ -236,20 +235,21 @@ function inject_globals(data) {
     );
 }
 
-function on_redis_instance_change(url) {
+function on_redis_instance_change(site_map) {
     $('#redis_instances').on('change', function () {
         refresh_dashboard();
-        refresh_redis_memory(url);
+        refresh_redis_memory(site_map['rqmonitor.redis_memory_api']);
+        reload_sidebar_queues(site_map);
     })
 }
 
-function on_redis_memory_refresh(url){
+function on_redis_memory_refresh(site_map){
     $('#redis_memory_refresh').on('click', function () {
-        refresh_redis_memory(url);
+        refresh_redis_memory(site_map['rqmonitor.redis_memory_api']);
     });
 }
 
-function setup_worker_datatable(url) {
+function setup_worker_datatable(site_map) {
     workers_table = $('#workers_table').DataTable({
         "processing": "True",
         "language": {
@@ -257,7 +257,7 @@ function setup_worker_datatable(url) {
             "processing": "Loading...",
         },
         "ajax": {
-            "url": url,
+            "url": site_map['rqmonitor.list_workers_api'],
             "type": "GET",
             "data": function (d) {
                 return $.extend(
@@ -354,8 +354,7 @@ function setup_worker_datatable(url) {
     */
 }
 
-
-function setup_jobs_datatable(job_info_url, datatable_url) {
+function setup_jobs_datatable(job_info_url, site_map) {
     var job_result_ttl = "specifies how long (in seconds) successful jobs and their results are kept. Expired jobs will be automatically deleted. Defaults to 500 seconds.";
     var job_timeout = "specifies the maximum runtime of the job before it’s interrupted and marked as failed. Its default unit is seconds and it can be an integer or a string representing an integer(e.g. 2, '2'). Furthermore, it can be a string with specify unit including hour, minute, second (e.g. '1h', '3m', '5s').";
     var job_failure_ttl = " specifies how long (in seconds) failed jobs are kept (defaults to 1 year)";
@@ -383,7 +382,7 @@ function setup_jobs_datatable(job_info_url, datatable_url) {
                 "processing": "Loading...",
             },
             "ajax": {
-                "url": datatable_url,
+                "url": site_map['rqmonitor.list_jobs_api'],
                 "type": "GET",
                 // in case of reload if data is initialised as static object then will not
                 //be evaluated only once. If you want to read new data on each reload, you'd need to use it as a
@@ -449,13 +448,10 @@ function setup_jobs_datatable(job_info_url, datatable_url) {
 
     });
 
-}
+}     
 
-
-       
-
-function action_modal_onconfirm(modal_selector, site_map) {
-    $(modal_selector).on('click', '.confirm', function (event) {
+function action_modal_onconfirm(site_map) {
+    $('#confirmation').on('click', '.confirm', function (event) {
         var target_class = $(this).closest('.modal').attr('targetclass');
         var target_id = $(this).closest('.modal').attr('name');
         var task = $(this).closest('.modal').attr('task');
@@ -466,8 +462,10 @@ function action_modal_onconfirm(modal_selector, site_map) {
                 ajax_action("POST", site_map['rqmonitor.empty_queue_api'], { 'queue_id': target_id}, queues_table, modal);
             } else if (task === 'delete') {
                 ajax_action("POST", site_map['rqmonitor.delete_queue_api'], { 'queue_id': target_id}, queues_table, modal);
+                reload_sidebar_queues(site_map);
             } else if (task === 'deleteall') {
                 ajax_action("POST", site_map['rqmonitor.delete_all_queues_api'],{}, queues_table, modal);
+                reload_sidebar_queues(site_map);
             } else if (task === 'emptyall') {
                 ajax_action("POST", site_map['rqmonitor.empty_all_queues_api'], {}, queues_table, modal);
             }
@@ -527,3 +525,55 @@ function on_queue_selection_change(){
     });
 }  
 
+function on_click_jobs_dashboard(nunjucks_job_info_url, sitemap){
+    $('#jobsmenu').on('show.bs.collapse', function (e) {
+        if ($(this).is(e.target)) {
+            $.ajax({
+                type: "GET",
+                url: site_map['rqmonitor.get_jobs_dashboard'],
+                data: inject_globals(),
+                success: function (response) {
+                    $('#main_dashboard').html(response);
+                    setup_jobs_datatable(nunjucks_job_info_url, site_map);
+                },
+                error: function (rs, e) {
+                    $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
+                }
+            });
+        }
+    });
+}
+
+function on_click_workers_dashboard(site_map){
+    $('#workers_link').on('click', function () {
+        $.ajax({
+            type: "GET",
+            url: site_map['rqmonitor.get_workers_dashboard'],
+            data: inject_globals(),
+            success: function (response) {
+                $('#main_dashboard').html(response);
+                setup_worker_datatable(site_map);
+            },
+            error: function (rs, e) {
+                $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
+            }
+        });
+    });
+}
+
+function on_click_queues_dashboard(site_map){
+    $('#queues_link').on('click', function () {
+        $.ajax({
+            type: "GET",
+            url: site_map['rqmonitor.get_queues_dashboard'],
+            data: inject_globals(),
+            success: function (response) {
+                $('#main_dashboard').html(response);
+                setup_queues_datatable(site_map);
+            },
+            error: function (rs, e) {
+                $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
+            }
+        });
+    });
+}              
