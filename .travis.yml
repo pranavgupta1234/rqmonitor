@@ -1,0 +1,19 @@
+language: python
+cache: pip
+python:
+  - 3.5
+  - 3.6
+  - 3.7
+  - pypy3
+before_install:
+  - "pip install -U pip"
+  - "export PYTHONPATH=$PYTHONPATH:$(pwd)"
+install:
+  - "pip install -U pip"
+  - "pip install -r requirements.txt"
+script:
+  - python -m unittest discover
+services:
+  - redis
+
+
