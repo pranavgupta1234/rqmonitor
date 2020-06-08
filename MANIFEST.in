@@ -1,6 +1,5 @@
 include setup.py
 include README.md
-include *.rst
 include LICENSE
 recursive-include rqmonitor/templates *
 recursive-include rqmonitor/static *

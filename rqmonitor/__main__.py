@@ -1,4 +1,4 @@
-import cli
+import rqmonitor.cli as cli
 
 
 if __name__ == "__main__":

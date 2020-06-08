@@ -268,3 +268,6 @@ def run(
 
 def main():
     run(auto_envvar_prefix="RQ_MONITOR")
+
+if __name__ == '__main__':
+    main()
