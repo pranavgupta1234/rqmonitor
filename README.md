@@ -4,11 +4,11 @@
   <br>
 </h1>
 
-<h4 align="center">RQ Monitor is Flask based more actionable and dynamic web frontend for monitoring your RQ.</h4>
+<h3 align="center">RQ Monitor is Flask based more actionable and dynamic web frontend for monitoring your RQ.</h3>
 
 <p align="center">
   <a href="https://opensource.org/licenses/Apache-2.0">
-    <img alt="PyPI - License" src="https://img.shields.io/pypi/l/rqmonitor?style=for-the-badge">
+    <img alt="GitHub" src="https://img.shields.io/github/license/pranavgupta1234/rqmonitor?style=for-the-badge">
   </a>
   <a href="https://pypi.org/project/rqmonitor/">
     <img alt="PyPI" src="https://img.shields.io/pypi/v/rqmonitor?style=for-the-badge">
