@@ -25,6 +25,10 @@
   <a href="#">
     <img alt="Travis (.org)" src="https://img.shields.io/travis/pranavgupta1234/rqmonitor?style=for-the-badge">
   </a>
+  <a href="#">
+  <img alt="Docker Image Size (latest by date)" src="https://img.shields.io/docker/image-size/pranavgupta1234/rqmonitor?logo=docker&style=for-the-badge">
+  </a>
+
 </p>
 
 <p align="center">
