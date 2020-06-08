@@ -1,14 +1,23 @@
-import setuptools
+import os
+
+from setuptools import find_packages, setup
+
+
+def get_version():
+    basedir = os.path.dirname(__file__)
+    with open(os.path.join(basedir, 'rqmonitor/version.py')) as f:
+        locals = {}
+        exec(f.read(), locals)
+        return locals['VERSION']
+
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
 
-setuptools.setup(
+setup(
     name='rqmonitor',
-    version='0.0.3',
+    version=get_version(),
     author="Pranav Gupta",
     author_email="pranavgupta4321@gmail.com",
     description="Flask based dynamic and actionable dashboard for monitoring RQs",
@@ -17,8 +26,19 @@ setuptools.setup(
     url="https://github.com/pranavgupta1234/rqmonitor",
     download_url="https://github.com/pranavgupta1234/rqmonitor/archive/v_0.0.1.tar.gz",
     license="Apache Software License",
-    packages=["rqmonitor"],
-    install_requires=requirements,
+    packages=find_packages(exclude=('tests',)),
+    include_package_data=True,
+    zip_safe=False,
+    platforms='any',
+    install_requires=[
+        'redis>=3.3.11',
+        'humanize>=2.4.0',
+        'Flask>=1.1.1',
+        'Click>=7.0',
+        'six>=1.13.0',
+        'Werkzeug>=0.16.0',
+        'rq>=1.2.0',
+    ],
     entry_points={
         'console_scripts': [
             'rqmonitor = rqmonitor.cli:main'
