@@ -14,7 +14,7 @@
             href="{{ url_for('static', filename='assets/vendor/fonts/fontawesome/css/fontawesome-all.css') }}">
         <link rel="stylesheet" type="text/css"
             href="{{ url_for('static', filename='assets/vendor/datatables/css/dataTables.bootstrap4.css') }}">
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='assets/vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
     </head>
 
     <body>
@@ -59,7 +59,7 @@
         <script src="{{ url_for('static', filename='assets/vendor/slimscroll/jquery.slimscroll.js') }}"></script>
         <script src="{{ url_for('static', filename='assets/vendor/select2/js/select2.min.js') }}"></script>
         <script src="{{ url_for('static', filename='assets/vendor/nunjucks/nunjucks.min.js') }}"></script>
-        <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+        <script src="{{ url_for('static', filename='assets/vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
         <script
             src="{{ url_for('static', filename='assets/vendor/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
     </body>

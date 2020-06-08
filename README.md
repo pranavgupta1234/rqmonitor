@@ -8,19 +8,22 @@
 
 <p align="center">
   <a href="https://opensource.org/licenses/Apache-2.0">
-    <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="license">
+    <img alt="PyPI - License" src="https://img.shields.io/pypi/l/rqmonitor?style=for-the-badge">
   </a>
   <a href="https://pypi.org/project/rqmonitor/">
-    <img src="https://img.shields.io/pypi/v/rqmonitor.svg?label=rqmonitor" alt="license">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/rqmonitor?style=for-the-badge">
   </a>
   <a href="https://pypi.org/project/rqmonitor/">
-    <img src="https://img.shields.io/pypi/pyversions/rqmonitor.svg" alt="license">
+    <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/rqmonitor?style=for-the-badge">
   </a>
   <a href="https://github.com/pranavgupta1234/rqmonitor/issues">
-    <img src="https://img.shields.io/github/issues/pranavgupta1234/rqmonitor.svg" alt="license">
+    <img alt="GitHub issues" src="https://img.shields.io/github/issues/pranavgupta1234/rqmonitor?style=for-the-badge">
   </a>
   <a href="https://github.com/pranavgupta1234/rqmonitor/pulls">
-    <img src="https://img.shields.io/github/issues-pr/pranavgupta1234/rqmonitor.svg" alt="license">
+    <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/pranavgupta1234/rqmonitor?style=for-the-badge">
+  </a>
+  <a href="#">
+    <img alt="Travis (.org)" src="https://img.shields.io/travis/pranavgupta1234/rqmonitor?style=for-the-badge">
   </a>
 </p>
 

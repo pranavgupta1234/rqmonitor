@@ -216,7 +216,7 @@ def check_url(url, decode_components=False):
 )
 @click.option("--debug/--normal", default=False, help="Enter DEBUG mode")
 @click.option(
-    "-v", "--verbose", is_flag=True, default=True, help="Enable verbose logging"
+    "-v", "--verbose", is_flag=True, default=False, help="Enable verbose logging"
 )
 def run(
     bind,
@@ -263,7 +263,7 @@ def run(
     for url in redis_url:
         check_url(url)
 
-    app.run(host=bind, port=port, debug=True)
+    app.run(host=bind, port=port, debug=debug)
 
 
 def main():
