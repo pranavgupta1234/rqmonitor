@@ -3,6 +3,9 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 setuptools.setup(
     name='rqmonitor',
     version='0.0.1',
@@ -12,8 +15,15 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pranavgupta1234/rqmonitor",
+    download_url="https://github.com/pranavgupta1234/rqmonitor/archive/v_0.0.1.tar.gz",
     license="Apache Software License",
     packages=["rqmonitor"],
+    install_requires=requirements,
+    entry_points={
+        'console_scripts': [
+            'rqmonitor = rqmonitor.cli:main'
+        ]
+    },
     classifiers=[
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
