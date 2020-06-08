@@ -31,6 +31,7 @@
   <a href="#key-features">Key Features</a> •
   <a href="#install">Install</a> •
   <a href="#usage">Usage</a> •
+  <a href="#docker">Docker</a> •
   <a href="#credits">Credits</a> •
   <a href="#contribute">Contribute</a> •
   <a href="#similar-tool">Similar Tool</a> •
@@ -101,7 +102,21 @@ Options:
 ```
 
 
+## Docker
 
+You love docker, don't you ?
+
+Pull rqmonitor latest docker image from dockerhub
+```
+docker pull pranavgupta1234/rqmonitor
+docker run -p 8899:8899 pranavgupta1234/rqmonitor
+```
+
+The above command will successfully run the flask app but your redis is probably on your docker host then
+provide your docker host private IP for redis url via env, like:
+```
+docker run --env RQ_MONITOR_REDIS_URL=redis://<your-private-ip>:6379 -p 8899:8899 pranavgupta1234/rqmonitor
+```
 
 ## Credits
 
@@ -112,6 +127,8 @@ This software majorly uses the following open source packages:
 - [rq](https://github.com/rq/rq)
 - [nunjucks](https://mozilla.github.io/nunjucks/)
 - [Concept Admin Dashboard](https://github.com/puikinsh/concept)
+- [rq-dashboard](https://github.com/Parallels/rq-dashboard) Small Snippets
+
 
 
 ## Contribute
