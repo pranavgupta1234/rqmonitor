@@ -94,7 +94,7 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
                                 for worker_id in worker_ids]:
             os.kill(worker_instance.pid, signal_to_pass)
     except ValueError:
-        logger.warning(f'Problem in deleting workers {worker_ids}')
+        logger.warning('Problem in deleting workers {0}'.format(worker_ids))
         return False
 
     return True
@@ -171,7 +171,7 @@ def get_queue(queue):
         else:
             return Queue.from_queue_key(Queue.redis_queue_namespace_prefix+queue)
 
-    raise TypeError(f'{queue} is not of class {str} or {Queue}')
+    raise TypeError('{0} is not of class {1} or {2}'.format(queue, str, Queue))
 
 
 def list_jobs_on_queue(queue):

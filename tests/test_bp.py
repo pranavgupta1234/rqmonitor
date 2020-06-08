@@ -38,3 +38,15 @@ class TestDecorators(unittest.TestCase):
     def test_redis_index_before_request(self):
         response = self.client.get('/', query_string={ 'redis_instance_index' : 100})
         self.assertEqual(response.status_code, HTTP_BAD_REQUEST)
+
+    def test_job_cancel_with_no_id(self):
+        response = self.client.post('/jobs/cancel')
+        self.assertEqual(response.status_code, HTTP_BAD_REQUEST)
+
+    def test_job_delete_with_no_id(self):
+        response = self.client.post('/jobs/delete')
+        self.assertEqual(response.status_code, HTTP_BAD_REQUEST)
+
+    def test_job_requeue_with_no_id(self):
+        response = self.client.post('/jobs/requeue')
+        self.assertEqual(response.status_code, HTTP_BAD_REQUEST)

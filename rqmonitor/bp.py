@@ -130,16 +130,12 @@ def list_queues_api():
     queue_list = list_all_queues()
     rq_queues = []
     for queue in queue_list:
-        rq_queues.append(
-            {
+        rq_queues.append({
                 'queue_name': queue.name,
                 'job_count': queue.count,
             }
         )
-
     return {
-        'rq_host_url': REDIS_RQ_HOST,
-        'rq_workers_count': len(rq_queues),
         'data': rq_queues,
     }
 
@@ -162,7 +158,6 @@ def list_workers_api():
         )
 
     return {
-        'rq_workers_count': len(rq_workers),
         'data': rq_workers,
     }
 
@@ -191,7 +186,6 @@ def list_jobs_api():
     draw = int(request.args.get('draw'))
     search = request.args.get('search[value]')
 
-    request_source = request.args.get('from_datatable', None)
 
     requested_queues = request.args.getlist('queues[]')
     if requested_queues is None:
@@ -245,12 +239,11 @@ def delete_workers_api():
                 worker_names.append(worker_id)
                 delete_workers([worker_id])
         except ActionFailed:
-            raise RQMonitorException(f'Unable to delete worker/s', status_code=500)
+            raise RQMonitorException('Unable to delete worker/s', status_code=500)
 
         return {
-            'message': f'Successfully deleted worker {worker_names}'
+            'message': 'Successfully deleted worker/s {0}'.format(worker_names)
         }
-
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
@@ -264,9 +257,9 @@ def delete_queue_api():
         try:
             delete_queue(queue_id)
         except ActionFailed as e:
-            raise RQMonitorException(f'Unable to delete Queue {queue_id}', status_code=500)
+            raise RQMonitorException('Unable to delete Queue {0}'.format(queue_id), status_code=500)
         return {
-            'message': f'Successfully deleted {queue_id}'
+            'message': 'Successfully deleted {0}'.format(queue_id)
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
@@ -282,9 +275,9 @@ def empty_queue_api():
         try:
             empty_queue(queue_id)
         except ActionFailed as e:
-            raise RQMonitorException(f'Unable to empty Queue {queue_id}', status_code=500)
+            raise RQMonitorException('Unable to empty Queue {0}'.format(queue_id), status_code=500)
         return {
-            'message': f'Successfully emptied {queue_id}'
+            'message': 'Successfully emptied {0}'.format(queue_id)
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
@@ -297,7 +290,7 @@ def delete_all_queues_api():
         for queue in list_all_queues():
             queue.delete(delete_jobs=True)
         return {
-            'message': f'Successfully deleted queues {queue_names}'
+            'message': 'Successfully deleted queues {0}'.format(queue_names)
         }
     else:
         raise RQMonitorException('Invalid HTTP Request type', status_code=400)
@@ -311,7 +304,7 @@ def empty_all_queues_api():
         for queue in list_all_queues():
             queue.empty()
         return {
-            'message': f'Successfully emptied queues {queue_names}'
+            'message': 'Successfully emptied queues {0}'.format(queue_names)
         }
     else:
         raise RQMonitorException('Invalid HTTP Request type', status_code=400)
@@ -358,9 +351,9 @@ def cancel_job_api():
         try:
             cancel_job(job_id)
         except ActionFailed:
-            raise RQMonitorException(f'Unable to cancel {job_id}', status_code=500)
+            raise RQMonitorException('Unable to cancel {0}'.format(job_id), status_code=500)
         return {
-            'message': f'Successfully cancelled job with ID {job_id}'
+            'message': 'Successfully cancelled job with ID {0}'.format(job_id)
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
@@ -375,10 +368,10 @@ def requeue_job_api():
         try:
             requeue_job(job_id)
         except ActionFailed:
-            raise RQMonitorException(f'Unable to requeue {job_id}', status_code=500)
+            raise RQMonitorException('Unable to requeue {0}'.format(job_id), status_code=500)
 
         return {
-            'message': f'Successfully requeued job with ID {job_id}'
+            'message': 'Successfully requeued job with ID {}'.format(job_id)
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
@@ -393,10 +386,10 @@ def delete_job_api():
         try:
             delete_job(job_id)
         except ActionFailed:
-            raise RQMonitorException(f'Unable to delete {job_id}', status_code=500)
+            raise RQMonitorException('Unable to delete {0}'.format(job_id), status_code=500)
 
         return {
-            'message': f'Successfully deleted job with ID {job_id}'
+            'message': 'Successfully deleted job with ID {0}'.format(job_id)
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
@@ -414,11 +407,11 @@ def delete_all_jobs_api():
         try:
             delete_all_jobs_in_queues_registries(requested_queues, requested_job_status)
         except ActionFailed:
-            raise RQMonitorException(f'Unable to delete all jobs', status_code=500)
+            raise RQMonitorException('Unable to delete all jobs', status_code=500)
 
         return {
-            'message': f'Successfully deleted all jobs with'
-                       f' status as {requested_job_status} on queues {requested_queues}'
+            'message': 'Successfully deleted all jobs with status as {0} on queues {1}'
+                .format(requested_job_status, requested_queues)
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
@@ -434,10 +427,10 @@ def requeue_failed_jobs_api():
         try:
             fail_count = requeue_all_jobs_in_failed_registry(requested_queues)
         except ActionFailed:
-            raise RQMonitorException(f'Unable to requeue all, remaining {fail_count} ', status_code=500)
+            raise RQMonitorException('Unable to requeue all', status_code=500)
 
         return {
-            'message': f'Successfully requeued all jobs on queues {requested_queues}'
+            'message': 'Successfully requeued all jobs on queues {0}'.format(requested_queues)
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
@@ -452,7 +445,7 @@ def cancel_queued_jobs_api():
         try:
             fail_count = cancel_all_queued_jobs(requested_queues)
         except ActionFailed:
-            raise RQMonitorException(f'Unable to cancel all jobs', status_code=500)
+            raise RQMonitorException('Unable to cancel all jobs', status_code=500)
 
         return {
             'message': 'Successfully requeued all jobs'
