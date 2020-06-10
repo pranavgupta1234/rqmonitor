@@ -75,7 +75,7 @@ class TestBlueprintViews(RQMonitorTestCase):
         self.assertEqual(response.status_code, HTTP_OK)
 
         queues_list_response = self.client.get('/queues', query_string={'queue_id': some_queue.name})
-        json_resp = json.loads(queues_list_response.data)
+        json_resp = json.loads(queues_list_response.data.decode('utf-8'))
         self.assertEqual(json_resp["data"], [])
 
     def test_queues_delete_multiple(self):
