@@ -18,7 +18,7 @@ from rqmonitor.utils import (
 )
 
 from rqmonitor.defaults import RQ_MONITOR_REFRESH_INTERVAL
-from rq.connections import pop_connection, push_connection
+from rq.connections import pop_connection, push_connection, _connection_stack
 from rqmonitor.decorators import cache_control_no_store
 from rqmonitor.exceptions import RQMonitorException, ActionFailed
 from rq.worker import Worker
@@ -228,7 +228,7 @@ def delete_workers_api():
     if request.method == 'POST':
         worker_id = request.form.get('worker_id', None)
         delete_all = request.form.get('delete_all')
-        if worker_id is None and delete_all is "false":
+        if worker_id is None and (delete_all is "false" or delete_all is None):
             raise RQMonitorException('Worker ID not received', status_code=400)
         try:
             if delete_all == "true":
