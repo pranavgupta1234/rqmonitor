@@ -20,7 +20,7 @@ def find_empty_redis_database():
         testconn = Redis(db=dbnum)
         empty = testconn.dbsize() == 0
         if empty:
-            return testconn
+            return dbnum, testconn
     assert False, 'No empty Redis database found to run tests in.'
 
 
@@ -38,8 +38,8 @@ class RQMonitorTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Set up connection to Redis
-        testconn = find_empty_redis_database()
-
+        dbnum, testconn = find_empty_redis_database()
+        push_connection(testconn)
         # Store the connection (for sanity checking)
         cls.testconn = testconn
 
@@ -48,9 +48,8 @@ class RQMonitorTestCase(unittest.TestCase):
 
         cls.app = create_app_with_blueprint()
         cls.app.testing = True
-        cls.app.config['RQ_MONITOR_REDIS_URL'] = 'redis://127.0.0.1:6379'
+        cls.app.config['RQ_MONITOR_REDIS_URL'] = 'redis://127.0.0.1:6379/{0}'.format(dbnum)
         cls.client = cls.app.test_client()
-        cls.app.redis_conn = testconn
 
 
     def setUp(self):
@@ -66,6 +65,6 @@ class RQMonitorTestCase(unittest.TestCase):
     def tearDownClass(cls):
         logging.disable(logging.NOTSET)
 
-        # Pop the connection to Redis, it should be empty
+        # Pop the connection to Redis,
         testconn = pop_connection()
-        assert testconn == None, 'Corrupted Redis connection stack'
+        assert testconn == cls.testconn, 'Corrupted Redis connection stack'
