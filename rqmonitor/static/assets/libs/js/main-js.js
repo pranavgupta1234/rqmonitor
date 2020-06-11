@@ -82,9 +82,9 @@ function action_modal_onshow() {
             } else if (action === 'delete') {
                 update_modal_info(modal, 'Confirm to delete ' + target_id, target_class, target_id, action, 'Queue will be deleted along with all jobs on it!')
             } else if (action === 'deleteall') {
-                update_modal_info(modal, 'Confirm to delete these queues ' + get_checked_queues(), target_class, target_id, action, 'These queues will be deleted along with all jobs on it!')
+                update_modal_info(modal, 'Confirm to delete these queues ' + get_checked_queues().join(", "), target_class, target_id, action, 'These queues will be deleted along with all jobs on it!')
             } else if (action === 'emptyall') {
-                update_modal_info(modal, 'Confirm to empty these queues ' + get_checked_queues(), target_class, target_id, action, 'All the queued jobs will be removed from these queues!')
+                update_modal_info(modal, 'Confirm to empty these queues ' + get_checked_queues().join(", "), target_class, target_id, action, 'All the queued jobs will be removed from these queues!')
             }
         } else if (target_class === 'job') {
             var queue_for_job = button.data('jobqueue')
@@ -95,11 +95,11 @@ function action_modal_onshow() {
             } else if (action === "cancel") {
                 update_modal_info(modal, 'Confirm to cancel ' + target_id, target_class, target_id, action, 'Job will be cancelled and never be executed or inspected!')
             } else if (action === "cancelall") {
-                update_modal_info(modal, 'Confirm to cancel all jobs on ' + get_checked_queues(), target_class, target_id, action, 'Jobs will be cancelled and never be executed or inspected!')
+                update_modal_info(modal, 'Confirm to cancel all jobs on ' + get_checked_queues().join(", "), target_class, target_id, action, 'Jobs will be cancelled and never be executed or inspected!')
             } else if (action === "deleteall") {
-                update_modal_info(modal, 'Confirm to delete all jobs on ' + get_checked_queues(), target_class, target_id, action, 'Jobs will be permanently deleted from Redis!')
+                update_modal_info(modal, 'Confirm to delete all jobs on ' + get_checked_queues().join(", "), target_class, target_id, action, 'Jobs will be permanently deleted from Redis!')
             } else if (action === "requeueall") {
-                update_modal_info(modal, 'Confirm to requeue all failed jobs from ' + get_checked_queues(), target_class, target_id, action, 'All failed jobs will be removed from their queue failed job registry and put on their respective original queues again')
+                update_modal_info(modal, 'Confirm to requeue all failed jobs from ' + get_checked_queues().join(", "), target_class, target_id, action, 'All failed jobs will be removed from their queue failed job registry and put on their respective original queues again')
             }
         } else if (target_class === 'worker') {
             if (action === 'delete') {
