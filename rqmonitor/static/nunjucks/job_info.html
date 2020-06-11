@@ -1,51 +1,40 @@
-<div class="card border border-dark shadow-none mb-0">
-	<div class="card-header">
-		<div class="d-flex flex-row d-flex justify-content-between">
-			<div class="d-inline-flex p-0 mr-2">
-				<div class="dd-nodrag btn-group ml-auto">
-					<button class="btn btn-sm btn-dark">Job ID</button>
-					<button class="btn btn-sm btn-outline-dark" style="pointer-events: none; user-select:all">
-						{{ job_data.job_id }}
-					</button>
-				</div>
-			</div>
-			<div class="d-inline-flex p-0 mr-2 dd-nodrag btn-group ml-auto">
-				<button class="btn btn-sm btn-dark">Created</button>
-				<button class="btn btn-sm btn-outline-dark" style="pointer-events: none; user-select:all">
-					{{ job_data.job_created_time_humanize }}
-				</button>
-			</div>
-			<div class="d-inline-flex p-0 mr-2 dd-nodrag btn-group ml-auto">
-				<button class="btn btn-sm btn-dark">Enqueued</button>
-				<button class="btn btn-sm btn-outline-dark" style="pointer-events: none; user-select:all">
-					{{ job_data.job_enqueued_time_humanize }}
-				</button>
-			</div>
-		</div>
-	</div>
-	<div class="card-header text-wrap" style="width: 800px">
-		<button class="btn btn-sm btn-dark mb-2">Function Call</button><br>
-		{{ job_data.job_description }}
-	</div>
-	<div class="card-body" style="width: 800px">
-		{% if job_data.job_exc_info %}
-		<div class="alert alert-danger mb-0" style="white-space: pre-wrap" role="alert">
-			{{ job_data.job_exc_info }}
-		</div>
-		{% endif %}
-	</div>
-	<div class="card-footer">
-		<span class="mr-2"> <span class="badge-dot badge-primary"></span>Queued on <strong> {{ job_data.job_queue }}
-			</strong></span>
-		<span class="mr-2"> <span class="badge-dot badge-brand"></span> Status <strong> {{ job_data.job_status }}
-			</strong> </span>
-		<span class="mr-2"><span class="badge-dot  badge-secondary"></span> Job TTL <strong> {{ job_data.job_ttl }}
-			</strong></span>
-		<span class="mr-2"><span class="badge-dot badge-success"></span> Job timeout <strong> {{ job_data.job_timeout }}
-			</strong> </span>
-		<span class="mr-2"><span class="badge-dot badge-danger"></span> Job fail TTL <strong>
-				{{ job_data.job_fail_ttl }} </strong> </span>
-		<span class="mr-2"> <span class="badge-dot badge-info"></span>Job Result TTL <strong>
-				{{ job_data.job_result_ttl }} </strong></span>
-	</div>
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">{{ job_data.job_id }}</h4>
+        <p class="card-text">{{ job_data.job_description }}</p>
+    </div>
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item d-flex justify-content-between">
+            <span> created {{ job_data.job_created_time_humanize }} </span>
+            <span> enqueued {{ job_data.job_enqueued_time_humanize }} </span>
+            
+        </li>
+        {% if job_data.job_exc_info != "None" %}
+            <li class="list-group-item">
+                <div class="alert alert-danger mb-0" style="white-space: pre-wrap" role="alert">
+                    {{ job_data.job_exc_info }}
+                </div>
+            </li>
+        {% endif %}
+    </ul>
+    <div class="card-footer p-0 text-center d-flex justify-content-center">
+        <div class="card-footer-item card-footer-item-bordered">
+            <span class="border-right">on: <strong>{{ job_data.job_queue }}</strong> </span>
+        </div>
+        <div class="card-footer-item card-footer-item-bordered">
+            <span class="border-right">status: <strong>{{ job_data.job_status }}</strong> </span>
+        </div>
+        <div class="card-footer-item card-footer-item-bordered">
+            <span class="border-right">job_ttl: <strong>{{ job_data.job_ttl }} </strong></span>
+        </div>
+        <div class="card-footer-item card-footer-item-bordered">
+            <span class="border-right">timeout: <strong>{{ job_data.job_timeout }}</strong> </span>
+        </div>
+        <div class="card-footer-item card-footer-item-bordered">
+            <span class="border-right">fail_ttl: <strong>{{ job_data.job_fail_ttl }}</strong> </span>
+        </div>
+        <div class="card-footer-item card-footer-item-bordered">
+            <span class="border-right">result_ttl: <strong>{{ job_data.job_result_ttl }}</strong> </span>
+        </div>
+    </div>
 </div>
