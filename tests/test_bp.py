@@ -93,3 +93,11 @@ class TestBlueprintViews(RQMonitorTestCase):
         self.assertEqual(response.status_code, HTTP_OK)
         for queue in some_queues_instances:
             self.assertEqual(queue.is_empty(), True)
+
+    def test_redis_memory(self):
+        response = self.client.get('/redis/memory')
+        self.assertIn("redis_memory_used", json.loads(response.data.decode('utf-8')))
+
+    def test_requeue_failed_jobs_without_queuelist(self):
+        response = self.client.post('/jobs/requeue/all', data={})
+        self.assertEqual(response.status_code, HTTP_OK)
