@@ -457,9 +457,11 @@ function action_modal_onconfirm(site_map) {
         var task = $(this).closest('.modal').attr('task');
         var modal = $(this).closest('.modal');
 
+        modal.find('.modal-body').html('<span class="dashboard-spinner spinner-sm"></span>')
+
         if (target_class === 'queue') {
             if (task === 'empty') {
-                ajax_action("POST", site_map['rqmonitor.empty_queue_api'], { 'queue_id': target_id}, queues_table, modal);
+                ajax_action("POST", site_map['rqmonitor.empty_queue_api'], { 'queue_id': target_id}, queues_table, modal);           
             } else if (task === 'delete') {
                 ajax_action("POST", site_map['rqmonitor.delete_queue_api'], { 'queue_id': target_id}, queues_table, modal);
                 reload_sidebar_queues(site_map);
