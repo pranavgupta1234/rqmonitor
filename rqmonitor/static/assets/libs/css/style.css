@@ -10,6 +10,24 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.spinner-sm {
+  width: 60px;
+  height: 60px;
+}
+
+.dashboard-spinner {
+  margin: 0px 8px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: 6px solid transparent;
+  border-top: 6px solid #5969ff;
+  border-left: 6px solid #5969ff;
+  -webkit-animation: 1s spin linear infinite;
+  animation: 1s spin linear infinite;
+  display: inline-block;
+}
+
+
 h1,h2,h3,h4,h5,h6 {
   color: #3d405c;
   margin: 0px 0px 15px 0px;
