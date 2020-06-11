@@ -2,7 +2,10 @@
     <div class="row">
       <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
         {% block actionbuttons %}
-
+          <button type="button" data-action="deleteall" data-toggle="modal" data-target="#confirmation"  
+          class="btn btn-danger float-right" data-targetclass="queue">Delete Selected Queues</button>
+          <button type="button" data-action="emptyall" data-toggle="modal" data-target="#confirmation"  
+          class="btn btn-warning float-right mr-2" data-targetclass="queue">Empty Selected Queues</button>
         {% endblock %}
       </div>
     </div>
