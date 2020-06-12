@@ -1,7 +1,14 @@
 {% extends "rqmonitor/base_dashboard.html" %}
 {% block actionbuttons %}
-<button data-toggle="modal" data-target="#confirmation" data-action="deleteall"
-type="button" class="btn btn-danger float-right" data-targetclass="worker">Delete All Workers</button>
+  {% if is_suspended %}
+    <button id="suspendresume" data-toggle="modal" data-target="#confirmation" data-action="resumeall"
+    type="button" class="btn btn-warning float-right" data-targetclass="worker">Resume All Workers</button>
+  {% else %}
+    <button id="suspendresume" data-toggle="modal" data-target="#confirmation" data-action="suspendall"
+    type="button" class="btn btn-warning float-right" data-targetclass="worker">Suspend All Workers</button>
+  {% endif %}
+  <button data-toggle="modal" data-target="#confirmation" data-action="deleteall"
+  type="button" class="btn btn-danger float-right mr-2" data-targetclass="worker">Delete All Workers</button>
 {% endblock %}
 {% block table %}
   {% include 'rqmonitor/table_workers.html' %}
