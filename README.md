@@ -34,8 +34,8 @@
 <p align="center">
   <a href="#key-features">Key Features</a> •
   <a href="#install">Install</a> •
-  <a href="#usage">Usage</a> •
   <a href="#docker">Docker</a> •
+    <a href="#usage">Usage</a> •
   <a href="#credits">Credits</a> •
   <a href="#contribute">Contribute</a> •
   <a href="#similar-tool">Similar Tool</a> •
@@ -46,30 +46,49 @@
 
 ## Key Features
 
-* Redis RQ Memory monitoring - Implemented through Lua Scripting
-  - Possibly RQ is only using some subset of your redis and some other important data is also you want to keep a close eye on memory
-* All data through DataTables:
-  - All jobs, queues, workers are rendered by DataTables so you get additional functionality of sorting, searching, robust pagination.
-* More Ajax less reloading
-  - Once after firing up the dashboard no refresh is necessary, almost every refresh is done via ajax.  
+* Redis RQ Memory Monitoring - Implemented through Lua Scripting
+  - Possibly RQ is not the only work your redis is doing and you want to keep a close eye on memory consumption of RQ namespace. Be little careful while executing it on production environment with large data as script may block your redis for some time. 
+* All data population through DataTables:
+  - Queues and Workers dashboard are rendered by client side DataTables so you get additional functionality of sorting, searching, robust pagination.
+  - Jobs dashboard is rendered with server side option enabled of DataTables for easy loading of very large number of jobs.(Ajax Pipeling also planned in future)
+* More Ajax Less Reloading
+  - Once after firing up the dashboard, little to no refresh is necessary, almost every refresh is done via ajax.  
 * Jobs Filtering Support
-  - You can choose jobs from certain queue with certain status
-* Send Signals to Workers
-  - Maybe you want to kill some workers and feel too lazy to open up the RQ instance, don't worry rqmonitor has your back, directly send signals to your workers.
-* Highly Scalable Jobs Dashboard
-  - Jobs datatable is implemented via serverside with ajax pipelining 
+  - You can choose to view a set of jobs from certain queue with certain status.
+* Global Actions
+  - You can easily delete/empty multiple queues, jobs and suspend/resume workers.  
+* Take actions on workers
+  - Using rqmonitor you can suspend/resume your workers for debugging purposes or deletion functionality is also available but only for workers on same machine as of rqmonitor. (Later planned to send signals via fabric api).
 * Last but not the least is beautiful UI
 * More features coming!
 
 
 ## Install
 
-1. Install with [`pip`](https://pypi.org/project/rqmonitor/)
+1. Install [`rqmonitor`](https://pypi.org/project/rqmonitor/) with pip
     + `$ pip install rqmonitor`
+2. For Docker check below.
+
+
+## Docker
+
+You love docker, don't you ?
+
+Pull rqmonitor latest docker image from dockerhub
+```
+docker pull pranavgupta1234/rqmonitor
+docker run -p 8899:8899 pranavgupta1234/rqmonitor
+```
+
+The above command will successfully run the flask app but your redis is probably on your docker host then
+provide your docker host private IP for redis url via env, like:
+```
+docker run --env RQ_MONITOR_REDIS_URL=redis://<your-private-ip>:6379 -p 8899:8899 pranavgupta1234/rqmonitor
+```
 
 
 ## Usage
-
+CLI options are similar to that of rq-dashboard. 
 Download latest version of rqmonitor from pypi and fire up your command line and type `rqmonitor --help`.
 
 ```
@@ -106,48 +125,31 @@ Options:
 ```
 
 
-## Docker
-
-You love docker, don't you ?
-
-Pull rqmonitor latest docker image from dockerhub
-```
-docker pull pranavgupta1234/rqmonitor
-docker run -p 8899:8899 pranavgupta1234/rqmonitor
-```
-
-The above command will successfully run the flask app but your redis is probably on your docker host then
-provide your docker host private IP for redis url via env, like:
-```
-docker run --env RQ_MONITOR_REDIS_URL=redis://<your-private-ip>:6379 -p 8899:8899 pranavgupta1234/rqmonitor
-```
-
 ## Credits
 
-This software majorly uses the following open source packages:
+This software is majorly dependent on the following open source packages:
 
+- [rq](https://github.com/rq/rq)
 - [flask](https://github.com/pallets/flask)
 - [DataTables](https://github.com/DataTables/DataTables)
-- [rq](https://github.com/rq/rq)
-- [nunjucks](https://mozilla.github.io/nunjucks/)
 - [Concept Admin Dashboard](https://github.com/puikinsh/concept)
-- [rq-dashboard](https://github.com/Parallels/rq-dashboard) Small Snippets
-
 
 
 ## Contribute
 ---
 
-1. Clone repo and create a new branch: `$ git checkout https://github.com/pranavgupta1234/rqmonitor -b name_for_new_branch`.
+1. Clone repo and create a new branch: 
+  `$ git checkout https://github.com/pranavgupta1234/rqmonitor -b name_for_new_branch`.
 2. Make changes and test
 3. Submit Pull Request with comprehensive description of changes
 
 
 ## Similar Tool
+Some snippets in rqmonitor have been used from rq-dashboard.
 
 - [rq-dashboard](https://github.com/Parallels/rq-dashboard) - Yet another RQ Dashboard
 
 
 ## License
 
-Apache
+Apache 2.0
