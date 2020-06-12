@@ -40,7 +40,18 @@ function refresh_dashboard() {
     }
 }
 
-function ajax_action(request_type, action_url, _data, table, modal) {
+function post_worker_suspend_resume(){
+    current = $('#suspendresume').data('action')
+    if(current == 'suspendall'){
+        $('#suspendresume').data('action', 'resumeall');
+        $('#suspendresume').text('Resume All Workers');
+    }else{
+        $('#suspendresume').data('action', 'suspendall');
+        $('#suspendresume').text('Suspend All Workers');
+    }
+}
+
+function ajax_action(request_type, action_url, _data, table, modal, post_success = undefined) {
     $.ajax({
         type: request_type,
         url: action_url,
@@ -53,6 +64,9 @@ function ajax_action(request_type, action_url, _data, table, modal) {
             setTimeout(function () {
                 $('#confirmation').modal('hide');
             }, 2000);
+            if (post_success !== undefined){
+                post_success();
+            }
         },
         error: function (rs, e) {
             modal_error(modal, rs)
@@ -103,9 +117,13 @@ function action_modal_onshow() {
             }
         } else if (target_class === 'worker') {
             if (action === 'delete') {
-                update_modal_info(modal, 'Confirm to delete ' + target_id, target_class, target_id, action, 'Worker will be sent SIGINT to request warm shutdown, any currently executing tasks will be completed first.')
+                update_modal_info(modal, 'Confirm to delete ' + target_id, target_class, target_id, action, 'Worker on same instance will be sent SIGINT to request warm shutdown, any currently executing tasks will be completed first.')
             } else if (action === 'deleteall') {
-                update_modal_info(modal, 'Confirm to delete all workers', target_class, target_id, action, 'All workers will be sent SIGINT to request warm shutdown, any currently executing tasks will be completed first.')
+                update_modal_info(modal, 'Confirm to delete all workers', target_class, target_id, action, 'All workers on same instance will be sent SIGINT to request warm shutdown, any currently executing tasks will be completed first.')
+            } else if(action == 'suspendall'){
+                update_modal_info(modal, 'Confirm to suspend all workers', target_class, target_id, action, 'All workers will be suspended, no jobs will be executed now, any currently executing tasks will be completed first. Resume workers to make them work again.')                
+            } else if(action == 'resumeall'){
+                update_modal_info(modal, 'Confirm to resume all workers', target_class, target_id, action, 'All workers will be resumed and will start to work again.')                
             }
         }
     })
@@ -505,6 +523,12 @@ function action_modal_onconfirm(site_map) {
                 ajax_action("POST", site_map['rqmonitor.delete_workers_api'], {
                     'delete_all': "true",
                 }, workers_table, modal);
+            } else if (task === "suspendall") {
+                ajax_action("POST", site_map['rqmonitor.suspend_workers_api'], {
+                }, workers_table, modal, post_worker_suspend_resume);
+            } else if (task === "resumeall") {
+                ajax_action("POST", site_map['rqmonitor.resume_workers_api'], {
+                }, workers_table, modal, post_worker_suspend_resume);
             }
         }
 
