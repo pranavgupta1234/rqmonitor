@@ -18,10 +18,11 @@ from rqmonitor.utils import (
 )
 
 from rqmonitor.defaults import RQ_MONITOR_REFRESH_INTERVAL
-from rq.connections import pop_connection, push_connection, _connection_stack
+from rq.connections import pop_connection, push_connection, get_current_connection
 from rqmonitor.decorators import cache_control_no_store
 from rqmonitor.exceptions import RQMonitorException, ActionFailed
 from rq.worker import Worker
+from rq.suspension import suspend, resume, is_suspended
 import logging
 
 
@@ -115,7 +116,8 @@ def get_jobs_dashboard():
 @monitor_blueprint.route('/workers_dashboard')
 @cache_control_no_store
 def get_workers_dashboard():
-    return render_template('rqmonitor/workers.html')
+    return render_template('rqmonitor/workers.html',
+    is_suspended=is_suspended(connection=get_current_connection()))
 
 
 @monitor_blueprint.route('/queues_dashboard')
@@ -150,7 +152,7 @@ def list_workers_api():
             {
                 'worker_name': worker.name,
                 'listening_on': ', '.join(queue.name for queue in worker.queues),
-                'status': worker.get_state(),
+                'status': worker.get_state() if not is_suspended(get_current_connection()) else "suspended",
                 'current_job_id': worker.get_current_job_id(),
                 'success_jobs': worker.successful_job_count,
                 'failed_jobs': worker.failed_job_count,
@@ -243,6 +245,36 @@ def delete_workers_api():
 
         return {
             'message': 'Successfully deleted worker/s {0}'.format(worker_names)
+        }
+    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
+
+
+@monitor_blueprint.route('/workers/suspend', methods=['POST'])
+@cache_control_no_store
+def suspend_workers_api():
+    if request.method == 'POST':
+        try:
+            suspend(connection=get_current_connection())
+        except ActionFailed:
+            raise RQMonitorException('Unable to suspend worker/s', status_code=500)
+
+        return {
+            'message': 'Successfully suspended all workers'
+        }
+    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
+
+
+@monitor_blueprint.route('/workers/resume', methods=['POST'])
+@cache_control_no_store
+def resume_workers_api():
+    if request.method == 'POST':
+        try:
+            resume(connection=get_current_connection())
+        except ActionFailed:
+            raise RQMonitorException('Unable to resume worker/s', status_code=500)
+
+        return {
+            'message': 'Successfully resumed all workers'
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
@@ -430,7 +462,7 @@ def requeue_failed_jobs_api():
             raise RQMonitorException('Unable to requeue all', status_code=500)
 
         return {
-            'message': 'Successfully requeued all jobs on queues {0}'.format(requested_queues)
+            'message': 'Successfully requeued all jobs on queues {0}'.format(", ".join(requested_queues))
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
