@@ -3,6 +3,7 @@ import redis
 import os
 import signal
 import logging
+import socket
 from rq.registry import (StartedJobRegistry,
                          FinishedJobRegistry,
                          FailedJobRegistry,
@@ -92,7 +93,9 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
     try:
         for worker_instance in [Worker.find_by_key(attach_rq_worker_prefix(worker_id))
                                 for worker_id in worker_ids]:
-            os.kill(worker_instance.pid, signal_to_pass)
+            # kill if on same instance
+            if socket.gethostname() == worker_instance.hostname.decode('utf-8'):
+                os.kill(worker_instance.pid, signal_to_pass)
     except ValueError:
         logger.warning('Problem in deleting workers {0}'.format(worker_ids))
         return False

@@ -291,7 +291,7 @@ function setup_worker_datatable(site_map) {
                 render: function (data, type, row, meta) {
                     if (type === 'display') {
                         data = `
-                <a href="#" data-toggle="modal" data-target="#worker_info"
+                <a href="#" data-toggle="modal" data-target="#infomodal"
                 data-worker="`+ data + `">` + data + `</a>
                 `;
                     }
@@ -334,14 +334,14 @@ function setup_worker_datatable(site_map) {
     });
 
     function show_worker_modal(site_map){
-        $('#worker_info').on('show.bs.modal', function (event) {
+        $('#infomodal').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget); // Button that triggered the modal
             var worker_id = button.data('worker'); // Extract info from data-* attributes
             var modal = $(this);
     
             $.ajax({
                 url: site_map['rqmonitor.worker_info_api'],
-                data: { 'worker_id': worker_id, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
+                data: { 'worker_id': worker_id},
                 success: function (data) {
                     modal.find('.modal-title').text('Showing Info for ' + worker_id)
                     modal.attr('name', worker_id)
@@ -363,6 +363,8 @@ function setup_worker_datatable(site_map) {
             });
         });
     }
+
+    show_worker_modal(site_map);
 
     /*
     $('#workers_table tbody').on('click', '.worker_info_modal', function () {
