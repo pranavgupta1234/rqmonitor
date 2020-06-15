@@ -234,7 +234,7 @@ def list_jobs_in_queue_registry(queue, registry, start, end):
         return [Job.fetch(job_id) for job_id in job_ids]
     # although not implemented as registry this is for ease
     elif registry == 'queued':
-        return queue.get_jobs(start, end-start)
+        return queue.get_jobs(start, end-start+1)
     else:
         return []
 
@@ -258,7 +258,7 @@ def list_job_ids_in_queue_registry(queue, registry, start=0, end=-1):
         return queue.scheduled_job_registry.get_job_ids(start, end)
     # although not implemented as registry this is for ease and uniformity
     elif registry == 'queued':
-        return queue.get_job_ids(start, end-start)
+        return queue.get_job_ids(start, end-start+1)
     else:
         return []
 
@@ -442,11 +442,11 @@ def resolve_jobs(job_counts, start, length):
         current_block_length = block[2]
         while cursor < current_block_length:
             current_block_jobs = list_jobs_in_queue_registry(block[0], block[1], cursor,
-                                                             cursor+length)
+                                                             cursor+length-1)
             cursor += length
             jobs.extend(current_block_jobs)
             if len(jobs) >= length:
-                return jobs
+                return jobs[:length]
         cursor = 0
 
-    return jobs
+    return jobs[:length]
