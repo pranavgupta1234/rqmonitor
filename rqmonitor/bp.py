@@ -98,7 +98,6 @@ def home(redis_instance_index):
             site_map[rule.endpoint] = url_for(rule.endpoint)
 
     return render_template('rqmonitor/index.html',
-                                rq_host_url= REDIS_RQ_HOST,
                                 rq_queues_list= rq_queues_list,
                                 rq_possible_job_status= rq_possible_job_status,
                                 redis_instance_list=current_app.config.get('RQ_MONITOR_REDIS_URL'),
@@ -117,7 +116,7 @@ def get_jobs_dashboard():
 @cache_control_no_store
 def get_workers_dashboard():
     return render_template('rqmonitor/workers.html',
-    is_suspended=is_suspended(connection=get_current_connection()))
+                            is_suspended=is_suspended(connection=get_current_connection()))
 
 
 @monitor_blueprint.route('/queues_dashboard')
@@ -187,17 +186,14 @@ def list_jobs_api():
     length = int(request.args.get('length'))
     draw = int(request.args.get('draw'))
     search = request.args.get('search[value]')
-
-
     requested_queues = request.args.getlist('queues[]')
-    if requested_queues is None:
-        requested_queues = list_all_queues_names()
     requested_job_status = request.args.getlist('jobstatus[]')
-    if requested_job_status is None:
-        requested_job_status = list_all_possible_job_status()
 
     if not requested_queues or not requested_job_status:
         return {
+            'draw': draw,
+            'recordsTotal': 0,
+            'recordsFiltered': 0,
             'data': serialised_jobs,
         }
 
@@ -244,7 +240,7 @@ def delete_workers_api():
             raise RQMonitorException('Unable to delete worker/s', status_code=500)
 
         return {
-            'message': 'Successfully deleted worker/s {0}'.format(worker_names)
+            'message': 'Successfully deleted worker/s {0}'.format(", ".join(worker_names))
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
@@ -322,7 +318,7 @@ def delete_all_queues_api():
         for queue in list_all_queues():
             queue.delete(delete_jobs=True)
         return {
-            'message': 'Successfully deleted queues {0}'.format(queue_names)
+            'message': 'Successfully deleted queues {0}'.format(", ".join(queue_names))
         }
     else:
         raise RQMonitorException('Invalid HTTP Request type', status_code=400)
@@ -336,7 +332,7 @@ def empty_all_queues_api():
         for queue in list_all_queues():
             queue.empty()
         return {
-            'message': 'Successfully emptied queues {0}'.format(queue_names)
+            'message': 'Successfully emptied queues {0}'.format(", ".join(queue_names))
         }
     else:
         raise RQMonitorException('Invalid HTTP Request type', status_code=400)
@@ -443,7 +439,7 @@ def delete_all_jobs_api():
 
         return {
             'message': 'Successfully deleted all jobs with status as {0} on queues {1}'
-                .format(requested_job_status, requested_queues)
+                .format(", ".join(requested_job_status), ", ".join(requested_queues))
         }
     raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
