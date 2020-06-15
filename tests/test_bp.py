@@ -13,6 +13,7 @@ from rq.job import Job
 from rq.queue import Queue
 from rq.connections import _connection_stack
 from rq.worker import Worker
+from pprint import pprint
 
 HTTP_OK = 200
 HTTP_BAD_REQUEST = 400
@@ -101,3 +102,65 @@ class TestBlueprintViews(RQMonitorTestCase):
     def test_requeue_failed_jobs_without_queuelist(self):
         response = self.client.post('/jobs/requeue/all', data={})
         self.assertEqual(response.status_code, HTTP_OK)
+
+    def test_jobs_pagination_non_overlap(self):
+        q1 = Queue('q1')
+        q2 = Queue('q2')
+
+        for i in range(12):
+            job = Job.create(func=fixtures.some_calculation, args=(3, 4), kwargs=dict(z=2))
+            q1.enqueue_job(job)
+        for i in range(13):
+            job = Job.create(func=fixtures.some_calculation, args=(3, 4), kwargs=dict(z=2))
+            q2.enqueue_job(job)
+
+        self.assertEqual(q1.count+q2.count, 25)
+
+        query_string1 = {
+            'start': 0,
+            'length': 10,
+            'draw': 1,
+            'queues[]': ['q1', 'q2'],
+            'jobstatus[]': ['queued', 'failed']
+        }
+        query_string2 = {
+            'start': 10,
+            'length': 10,
+            'draw': 2,
+            'queues[]': ['q1', 'q2'],
+            'jobstatus[]': ['queued', 'failed']
+        }
+        query_string3 = {
+            'start': 20,
+            'length': 10,
+            'draw': 3,
+            'queues[]': ['q1', 'q2'],
+            'jobstatus[]': ['queued', 'failed']
+        }
+        response1 = self.client.get('/jobs', query_string=query_string1)
+        response1_json = json.loads(response1.data.decode('utf-8'))
+        self.assertEqual(response1_json['draw'], 1)
+        self.assertEqual(response1_json['recordsTotal'], 25)
+        self.assertEqual(response1_json['recordsFiltered'], 25)
+        self.assertEqual(len(response1_json['data']), 10)
+        data1 = response1_json['data']
+        data1_ids = [job['job_info']['job_id'] for job in data1]
+        response2 = self.client.get('/jobs', query_string=query_string2)
+        response2_json = json.loads(response2.data.decode('utf-8'))
+        self.assertEqual(response2_json['draw'], 2)
+        self.assertEqual(response2_json['recordsTotal'], 25)
+        self.assertEqual(response2_json['recordsFiltered'], 25)
+        self.assertEqual(len(response2_json['data']), 10)
+        data2 = response2_json['data']
+        data2_ids = [job['job_info']['job_id'] for job in data2]
+        for job_id in data1_ids:
+            self.assertNotIn(job_id, data2_ids)
+        response3 = self.client.get('/jobs', query_string=query_string3)
+        response3_json = json.loads(response3.data.decode('utf-8'))
+        self.assertEqual(response3_json['draw'], 3)
+        self.assertEqual(response3_json['recordsTotal'], 25)
+        self.assertEqual(response3_json['recordsFiltered'], 25)
+        self.assertEqual(len(response3_json['data']), 5)
+        data3 = response3_json['data']
+        for job_data in data2:
+            self.assertNotIn(job_data, data3)
