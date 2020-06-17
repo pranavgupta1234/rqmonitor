@@ -226,7 +226,7 @@ def delete_workers_api():
     if request.method == 'POST':
         worker_id = request.form.get('worker_id', None)
         delete_all = request.form.get('delete_all')
-        if worker_id is None and (delete_all is "false" or delete_all is None):
+        if worker_id == None and (delete_all == "false" or delete_all == None):
             raise RQMonitorException('Worker ID not received', status_code=400)
         try:
             if delete_all == "true":
