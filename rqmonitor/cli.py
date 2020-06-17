@@ -206,7 +206,7 @@ def check_url(url, decode_components=False):
     "refresh_interval",
     default=RQ_MONITOR_REFRESH_INTERVAL,
     type=int,
-    help="Refresh interval in ms",
+    help="Refresh interval in ms. Default: 2000",
 )
 @click.option(
     "--extra-path",
