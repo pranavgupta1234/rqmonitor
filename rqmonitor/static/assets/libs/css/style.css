@@ -398,8 +398,8 @@ html body .display-7 {
 }
 
 .navbar-redis-memory {
-  display: inline-block;
-  margin-left: 2rem;
+  float: right;
+  margin-right: 1rem;
   line-height: inherit;
   white-space: nowrap;
   padding: 11px 20px;
