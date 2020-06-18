@@ -125,6 +125,24 @@ def list_all_queues_names():
     return [queue.name for queue in list_all_queues()]
 
 
+# a bit hacky for now
+def validate_job_data(val, default="None", humanize_func=None,
+                      with_utcparse=False, relative_to_now=False, append_s=False):
+    if not val:
+        if humanize_func == None and append_s == True:
+            return str(val)+"s"
+        elif humanize_func == None:
+            return val
+        else:
+            if with_utcparse and relative_to_now:
+                return humanize_func(utcparse(val).timestamp() - datetime.now().timestamp())
+            elif with_utcparse and not relative_to_now:
+                return humanize_func(utcparse(val).timestamp())
+            else:
+                return humanize_func(val)
+    return default
+
+
 def reformat_job_data(job: Job):
     """
     Create serialized version of Job which can be consumed by DataTable
@@ -140,22 +158,24 @@ def reformat_job_data(job: Job):
     serialized_job['exc_info'] = job.exc_info
     return {
         "job_info": {
-            "job_id": job.id,
-            "job_func": job.func_name,
-            "job_description": serialized_job['description'],
-            "job_exc_info": str(serialized_job['exc_info']),
-            "job_status": serialized_job['status'],
-            "job_queue": serialized_job['origin'],
-            "job_enqueued_at": serialized_job['enqueued_at'],
-            "job_created_at": serialized_job['created_at'],
-            "job_created_time_humanize": humanize.naturaltime(utcparse(serialized_job['created_at']).timestamp()
-                                                              - datetime.now().timestamp()),
-            "job_enqueued_time_humanize": humanize.naturaltime(utcparse(serialized_job['enqueued_at']).timestamp()
-                                                              - datetime.now().timestamp()),
-            "job_ttl": "Infinite" if job.get_ttl() is None else job.get_ttl(),
-            "job_timeout":"Infinite" if job.timeout is None else job.timeout,
-            "job_result_ttl": '500s' if job.result_ttl is None else job.result_ttl,
-            "job_fail_ttl": '1y' if job.failure_ttl is None else job.failure_ttl,
+            "job_id": validate_job_data(job.id),
+            "job_func": validate_job_data(job.func_name),
+            "job_description": validate_job_data(serialized_job['description']),
+            "job_exc_info": validate_job_data(str(serialized_job['exc_info'])),
+            "job_status": validate_job_data(serialized_job['status']),
+            "job_queue": validate_job_data(serialized_job['origin']),
+            "job_created_time_humanize": validate_job_data(serialized_job['created_at'],
+                                                           humanize_func=humanize.naturaltime,
+                                                           with_utcparse=True,
+                                                           relative_to_now=True),
+            "job_enqueued_time_humanize": validate_job_data(serialized_job['enqueued_at'],
+                                                           humanize_func=humanize.naturaltime,
+                                                           with_utcparse=True,
+                                                           relative_to_now=True),
+            "job_ttl": validate_job_data(job.get_ttl(), default='Infinite', append_s=True),
+            "job_timeout": validate_job_data(job.timeout, default='180s', append_s=True),
+            "job_result_ttl": validate_job_data(job.result_ttl, default='500s', append_s=True),
+            "job_fail_ttl": validate_job_data(job.failure_ttl, default='1yr', append_s=True),
         },
     }
 
