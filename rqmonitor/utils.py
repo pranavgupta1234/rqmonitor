@@ -4,6 +4,7 @@ import os
 import signal
 import logging
 import socket
+import zlib
 from rq.registry import (StartedJobRegistry,
                          FinishedJobRegistry,
                          FailedJobRegistry,
@@ -129,18 +130,19 @@ def list_all_queues_names():
 def validate_job_data(val, default="None", humanize_func=None,
                       with_utcparse=False, relative_to_now=False, append_s=False):
     if not val:
-        if humanize_func == None and append_s == True:
-            return str(val)+"s"
-        elif humanize_func == None:
-            return val
+        return default
+
+    if humanize_func == None and append_s == True:
+        return str(val)+"s"
+    elif humanize_func == None:
+        return val
+    else:
+        if with_utcparse and relative_to_now:
+            return humanize_func(utcparse(val).timestamp() - datetime.now().timestamp())
+        elif with_utcparse and not relative_to_now:
+            return humanize_func(utcparse(val).timestamp())
         else:
-            if with_utcparse and relative_to_now:
-                return humanize_func(utcparse(val).timestamp() - datetime.now().timestamp())
-            elif with_utcparse and not relative_to_now:
-                return humanize_func(utcparse(val).timestamp())
-            else:
-                return humanize_func(val)
-    return default
+            return humanize_func(val)
 
 
 def reformat_job_data(job: Job):
@@ -154,28 +156,27 @@ def reformat_job_data(job: Job):
     :return: serialized job
     """
     serialized_job = job.to_dict()
-    # remove decompression
-    serialized_job['exc_info'] = job.exc_info
     return {
         "job_info": {
-            "job_id": validate_job_data(job.id),
-            "job_func": validate_job_data(job.func_name),
-            "job_description": validate_job_data(serialized_job['description']),
-            "job_exc_info": validate_job_data(str(serialized_job['exc_info'])),
-            "job_status": validate_job_data(serialized_job['status']),
-            "job_queue": validate_job_data(serialized_job['origin']),
-            "job_created_time_humanize": validate_job_data(serialized_job['created_at'],
+            "job_id": validate_job_data(job.get_id()),
+            "job_description": validate_job_data(serialized_job.get('description')),
+            "job_exc_info": validate_job_data(zlib.decompress(serialized_job.get('exc_info')).decode('utf-8')
+                                              if serialized_job.get('exc_info') is not None
+                                              else None),
+            "job_status": validate_job_data(serialized_job.get('status')),
+            "job_queue": validate_job_data(serialized_job.get('origin')),
+            "job_created_time_humanize": validate_job_data(serialized_job.get('created_at'),
                                                            humanize_func=humanize.naturaltime,
                                                            with_utcparse=True,
                                                            relative_to_now=True),
-            "job_enqueued_time_humanize": validate_job_data(serialized_job['enqueued_at'],
+            "job_enqueued_time_humanize": validate_job_data(serialized_job.get('enqueued_at'),
                                                            humanize_func=humanize.naturaltime,
                                                            with_utcparse=True,
                                                            relative_to_now=True),
-            "job_ttl": validate_job_data(job.get_ttl(), default='Infinite', append_s=True),
-            "job_timeout": validate_job_data(job.timeout, default='180s', append_s=True),
-            "job_result_ttl": validate_job_data(job.result_ttl, default='500s', append_s=True),
-            "job_fail_ttl": validate_job_data(job.failure_ttl, default='1yr', append_s=True),
+            "job_ttl": validate_job_data(serialized_job.get('ttl'), default='Infinite', append_s=True),
+            "job_timeout": validate_job_data(serialized_job.get('timeout'), default='180s', append_s=True),
+            "job_result_ttl": validate_job_data(serialized_job.get('result_ttl'), default='500s', append_s=True),
+            "job_fail_ttl": validate_job_data(serialized_job.get('failure_ttl'), default='1yr', append_s=True),
         },
     }
 
