@@ -13,7 +13,6 @@ from rq.registry import (StartedJobRegistry,
 from rq.connections import resolve_connection
 from rq.utils import utcparse
 from rq.exceptions import InvalidJobOperationError
-from rqmonitor.exceptions import ActionFailed
 from datetime import datetime
 from rq.worker import Worker
 from rq.queue import Queue
@@ -53,11 +52,8 @@ def delete_queue(queue_id):
     def attach_rq_queue_prefix(queue_id):
         return Queue.redis_queue_namespace_prefix + queue_id
 
-    try:
-        queue_instance = Queue.from_queue_key(attach_rq_queue_prefix(queue_id))
-        queue_instance.delete()
-    except Exception as e:
-        raise ActionFailed
+    queue_instance = Queue.from_queue_key(attach_rq_queue_prefix(queue_id))
+    queue_instance.delete()
 
 
 def empty_queue(queue_id):
@@ -71,11 +67,8 @@ def empty_queue(queue_id):
     def attach_rq_queue_prefix(queue_id):
         return Queue.redis_queue_namespace_prefix + queue_id
 
-    try:
-        queue_instance = Queue.from_queue_key(attach_rq_queue_prefix(queue_id))
-        queue_instance.empty()
-    except Exception as e:
-        raise ActionFailed
+    queue_instance = Queue.from_queue_key(attach_rq_queue_prefix(queue_id))
+    queue_instance.empty()
 
 
 def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
@@ -289,7 +282,6 @@ def empty_registry(registry_name, queue_name, connection=None):
             here for performance reasons
     """
     redis_connection = resolve_connection(connection)
-
     queue_instance = Queue.from_queue_key(Queue.redis_queue_namespace_prefix+queue_name)
 
     registry_instance = None

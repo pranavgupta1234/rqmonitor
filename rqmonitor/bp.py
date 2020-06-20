@@ -19,8 +19,8 @@ from rqmonitor.utils import (
 
 from rqmonitor.defaults import RQ_MONITOR_REFRESH_INTERVAL
 from rq.connections import pop_connection, push_connection, get_current_connection
-from rqmonitor.decorators import cache_control_no_store
-from rqmonitor.exceptions import RQMonitorException, ActionFailed
+from rqmonitor.decorators import cache_control_no_store, catch_global_exception
+from rqmonitor.exceptions import RQMonitorException
 from rq.worker import Worker
 from rq.suspension import suspend, resume, is_suspended
 import logging
@@ -36,7 +36,6 @@ REDIS_RQ_HOST = 'localhost:6379'
 monitor_blueprint = Blueprint('rqmonitor', __name__, template_folder='templates', static_folder='static')
 
 
-# Plan to separate between HTTP and non HTTP errors by using HTTPException class
 @monitor_blueprint.errorhandler(RQMonitorException)
 def handle_invalid_usage(error):
     response = jsonify(error.to_dict())
@@ -88,6 +87,7 @@ def pop_rq_connection(exception=None):
 
 
 @monitor_blueprint.route('/', defaults={"redis_instance_index": 0})
+@catch_global_exception
 @cache_control_no_store
 def home(redis_instance_index):
     rq_queues_list = list_all_queues_names()
@@ -107,12 +107,14 @@ def home(redis_instance_index):
 
 
 @monitor_blueprint.route('/jobs_dashboard')
+@catch_global_exception
 @cache_control_no_store
 def get_jobs_dashboard():
     return render_template('rqmonitor/jobs.html')
 
 
 @monitor_blueprint.route('/workers_dashboard')
+@catch_global_exception
 @cache_control_no_store
 def get_workers_dashboard():
     return render_template('rqmonitor/workers.html',
@@ -120,12 +122,14 @@ def get_workers_dashboard():
 
 
 @monitor_blueprint.route('/queues_dashboard')
+@catch_global_exception
 @cache_control_no_store
 def get_queues_dashboard():
     return render_template('rqmonitor/queues.html')
 
 
 @monitor_blueprint.route('/queues', methods=['GET'])
+@catch_global_exception
 @cache_control_no_store
 def list_queues_api():
     queue_list = list_all_queues()
@@ -142,6 +146,7 @@ def list_queues_api():
 
 
 @monitor_blueprint.route('/workers', methods=['GET'])
+@catch_global_exception
 @cache_control_no_store
 def list_workers_api():
     workers_list = Worker.all()
@@ -164,6 +169,7 @@ def list_workers_api():
 
 
 @monitor_blueprint.route('queues/sidebar', methods=['GET'])
+@catch_global_exception
 @cache_control_no_store
 def refresh_sidebar_queues():
     return render_template('rqmonitor/sidebar_queues.html',
@@ -172,6 +178,7 @@ def refresh_sidebar_queues():
 
 
 @monitor_blueprint.route('/jobs', methods=['GET'])
+@catch_global_exception
 @cache_control_no_store
 def list_jobs_api():
     """
@@ -228,86 +235,69 @@ def delete_workers_api():
         delete_all = request.form.get('delete_all')
         if worker_id == None and (delete_all == "false" or delete_all == None):
             raise RQMonitorException('Worker ID not received', status_code=400)
-        try:
-            if delete_all == "true":
-                for worker_instance in Worker.all():
-                    worker_names.append(worker_instance.name)
-                delete_workers(worker_names)
-            else:
-                worker_names.append(worker_id)
-                delete_workers([worker_id])
-        except ActionFailed:
-            raise RQMonitorException('Unable to delete worker/s', status_code=500)
+
+        if delete_all == "true":
+            for worker_instance in Worker.all():
+                worker_names.append(worker_instance.name)
+            delete_workers(worker_names)
+        else:
+            worker_names.append(worker_id)
+            delete_workers([worker_id])
 
         return {
             'message': 'Successfully deleted worker/s {0}'.format(", ".join(worker_names))
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/workers/suspend', methods=['POST'])
 @cache_control_no_store
 def suspend_workers_api():
     if request.method == 'POST':
-        try:
-            suspend(connection=get_current_connection())
-        except ActionFailed:
-            raise RQMonitorException('Unable to suspend worker/s', status_code=500)
-
+        suspend(connection=get_current_connection())
         return {
             'message': 'Successfully suspended all workers'
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/workers/resume', methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def resume_workers_api():
     if request.method == 'POST':
-        try:
-            resume(connection=get_current_connection())
-        except ActionFailed:
-            raise RQMonitorException('Unable to resume worker/s', status_code=500)
-
+        resume(connection=get_current_connection())
         return {
             'message': 'Successfully resumed all workers'
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/queues/delete', methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def delete_queue_api():
     if request.method == 'POST':
         queue_id = request.form.get('queue_id', None)
         if queue_id is None:
-            raise RQMonitorException('Queue Name not received', status_code=400)
-        try:
-            delete_queue(queue_id)
-        except ActionFailed as e:
-            raise RQMonitorException('Unable to delete Queue {0}'.format(queue_id), status_code=500)
+            raise RQMonitorException('Queue Name not received',  status_code=400)
+        delete_queue(queue_id)
         return {
             'message': 'Successfully deleted {0}'.format(queue_id)
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
-
 
 
 @monitor_blueprint.route('/queues/empty', methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def empty_queue_api():
     if request.method == 'POST':
         queue_id = request.form.get('queue_id', None)
         if queue_id is None:
             raise RQMonitorException('Queue Name not received', status_code=400)
-        try:
-            empty_queue(queue_id)
-        except ActionFailed as e:
-            raise RQMonitorException('Unable to empty Queue {0}'.format(queue_id), status_code=500)
+
+        empty_queue(queue_id)
+
         return {
             'message': 'Successfully emptied {0}'.format(queue_id)
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/queues/delete/all', methods=['POST'])
@@ -320,11 +310,10 @@ def delete_all_queues_api():
         return {
             'message': 'Successfully deleted queues {0}'.format(", ".join(queue_names))
         }
-    else:
-        raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/queues/empty/all', methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def empty_all_queues_api():
     if request.method == 'POST':
@@ -334,11 +323,10 @@ def empty_all_queues_api():
         return {
             'message': 'Successfully emptied queues {0}'.format(", ".join(queue_names))
         }
-    else:
-        raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/workers/info', methods=['GET'])
+@catch_global_exception
 @cache_control_no_store
 def worker_info_api():
     if request.method == 'GET':
@@ -366,63 +354,57 @@ def worker_info_api():
                                 if worker_instance.last_heartbeat is not None else "Not Available",
             'worker_current_job_id': worker_instance.get_current_job_id(),
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/jobs/cancel', methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def cancel_job_api():
     if request.method == 'POST':
         job_id = request.form.get('job_id')
         if job_id is None:
             raise RQMonitorException('Job ID not received', status_code=400)
-        try:
-            cancel_job(job_id)
-        except ActionFailed:
-            raise RQMonitorException('Unable to cancel {0}'.format(job_id), status_code=500)
+
+        cancel_job(job_id)
+
         return {
             'message': 'Successfully cancelled job with ID {0}'.format(job_id)
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/jobs/requeue',  methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def requeue_job_api():
     if request.method == 'POST':
         job_id = request.form.get('job_id')
         if job_id is None:
             raise RQMonitorException('Job ID not received', status_code=400)
-        try:
-            requeue_job(job_id)
-        except ActionFailed:
-            raise RQMonitorException('Unable to requeue {0}'.format(job_id), status_code=500)
+
+        requeue_job(job_id)
 
         return {
             'message': 'Successfully requeued job with ID {}'.format(job_id)
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/jobs/delete',  methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def delete_job_api():
     if request.method == 'POST':
         job_id = request.form.get('job_id')
         if job_id is None:
             raise RQMonitorException('Job ID not received', status_code=400)
-        try:
-            delete_job(job_id)
-        except ActionFailed:
-            raise RQMonitorException('Unable to delete {0}'.format(job_id), status_code=500)
 
+        delete_job(job_id)
         return {
             'message': 'Successfully deleted job with ID {0}'.format(job_id)
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/jobs/delete/all',  methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def delete_all_jobs_api():
     if request.method == 'POST':
@@ -432,56 +414,48 @@ def delete_all_jobs_api():
         if requested_queues is None or requested_job_status is None:
             raise RQMonitorException('No queue/status selected', status_code=400)
 
-        try:
-            delete_all_jobs_in_queues_registries(requested_queues, requested_job_status)
-        except ActionFailed:
-            raise RQMonitorException('Unable to delete all jobs', status_code=500)
+        delete_all_jobs_in_queues_registries(requested_queues, requested_job_status)
 
         return {
             'message': 'Successfully deleted all jobs with status as {0} on queues {1}'
                 .format(", ".join(requested_job_status), ", ".join(requested_queues))
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/jobs/requeue/all',  methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def requeue_failed_jobs_api():
     if request.method == 'POST':
         requested_queues = request.form.getlist('queues[]')
         if requested_queues is None:
             raise RQMonitorException('No queue/s selected', status_code=400)
-        fail_count = 0
-        try:
-            fail_count = requeue_all_jobs_in_failed_registry(requested_queues)
-        except ActionFailed:
-            raise RQMonitorException('Unable to requeue all', status_code=500)
+
+        fail_count = requeue_all_jobs_in_failed_registry(requested_queues)
 
         return {
             'message': 'Successfully requeued all jobs on queues {0}'.format(", ".join(requested_queues))
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/jobs/cancel/all',  methods=['POST'])
+@catch_global_exception
 @cache_control_no_store
 def cancel_queued_jobs_api():
     if request.method == 'POST':
         requested_queues = request.form.getlist('queues[]')
         if requested_queues is None:
             raise RQMonitorException('No queue/s selected', status_code=400)
-        try:
-            fail_count = cancel_all_queued_jobs(requested_queues)
-        except ActionFailed:
-            raise RQMonitorException('Unable to cancel all jobs', status_code=500)
+
+        fail_count = cancel_all_queued_jobs(requested_queues)
 
         return {
             'message': 'Successfully requeued all jobs'
         }
-    raise RQMonitorException('Invalid HTTP Request type', status_code=400)
 
 
 @monitor_blueprint.route('/redis/memory')
+@catch_global_exception
 @cache_control_no_store
 def redis_memory_api():
     return {
