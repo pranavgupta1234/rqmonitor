@@ -34,10 +34,18 @@
             
             $(document).ready(function () {
 
-                site_map = JSON.parse('{{ site_map|tojson }}');                
+                site_map = JSON.parse('{{ site_map|tojson }}'); 
+                nunjucks_template_urls = {
+                    'job_info': "{{ url_for('static', filename='nunjucks/job_info.html') }}",
+                    'error': "{{ url_for('static', filename='nunjucks/error.html') }}"
+                };
+                
+                // disable alert box for datatables ajax
+                $.fn.dataTable.ext.errMode = 'none';
+
                 var redis_instances = $('#redis_instances').select2({ width: 'resolve' });
                 //setup queues datatable on home page
-                setup_queues_datatable(site_map);
+                setup_queues_datatable(nunjucks_template_urls, site_map);
 
                 // setup event listeners 
                 on_job_status_selection_change();
@@ -47,9 +55,9 @@
                 action_modal_onshow();
                 action_modal_onconfirm(site_map);
                 modal_restore();
-                on_click_jobs_dashboard("{{ url_for('static', filename='nunjucks/job_info.html') }}", site_map);
-                on_click_workers_dashboard(site_map);
-                on_click_queues_dashboard(site_map);
+                on_click_jobs_dashboard(nunjucks_template_urls, site_map);
+                on_click_workers_dashboard(nunjucks_template_urls, site_map);
+                on_click_queues_dashboard(nunjucks_template_urls, site_map);
                 var refresh_content = setInterval(refresh_dashboard, "{{ refresh_interval }}");
             });
 

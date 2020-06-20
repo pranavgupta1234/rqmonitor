@@ -26,7 +26,12 @@ function modal_success(modal, response) {
 function modal_error(modal, response) {
     flask_response = JSON.parse(response.responseText);
     modal.find('.modal-title').html('<a href="#" class="btn btn-rounded btn-danger">Error</a>');
-    modal.find('.modal-body').html(flask_response.message + `<span class="badge badge-pill badge-brand ml-1">` + response.statusText + `</span>`);
+    modal.find('.modal-body').html(flask_response.message + 
+        `<span class="badge badge-pill badge-brand ml-1">` + response.statusText + `</span>
+        <br>
+        <div class="alert alert-danger mt-1 mb-2" style="white-space: pre-wrap" role="alert">`+flask_response.traceback+
+        `</div>`
+        );
     modal.find('.modal-footer').hide();
 }
 
@@ -68,8 +73,8 @@ function ajax_action(request_type, action_url, _data, table, modal, post_success
                 post_success();
             }
         },
-        error: function (rs, e) {
-            modal_error(modal, rs)
+        error: function (jqXHR, textStatus, errorThrown) {
+            modal_error(modal, jqXHR);
         }
     });
 }
@@ -156,7 +161,7 @@ function get_currently_selected_redis_index() {
 }
 
 
-function setup_queues_datatable(site_map) {
+function setup_queues_datatable(nunjucks_urls, site_map) {
 
     queues_table = $('#queues_table').DataTable({
         "processing": "True",
@@ -174,6 +179,22 @@ function setup_queues_datatable(site_map) {
             },
             "dataSrc": "data",
             "dataType": "json",
+            "error": function (jqXHR, textStatus, errorThrown) {
+                $.get({
+                    url: nunjucks_urls['error'],
+                    cache: false
+                }).then(function(error_template){
+                    rendered_template = nunjucks.renderString(
+                            error_template, 
+                            { 
+                                'error_info': JSON.parse(jqXHR.responseText),
+                                'textStatus': textStatus,
+                                'errorThrown': errorThrown,
+                            }
+                        );
+                    $('#main_content').html(rendered_template);
+                })
+            }
         },
         "columns": [
             {
@@ -267,7 +288,7 @@ function on_redis_memory_refresh(site_map){
     });
 }
 
-function setup_worker_datatable(site_map) {
+function setup_worker_datatable(nunjucks_urls, site_map) {
     workers_table = $('#workers_table').DataTable({
         "processing": "True",
         "language": {
@@ -284,6 +305,22 @@ function setup_worker_datatable(site_map) {
             },
             "dataSrc": "data",
             "dataType": "json",
+            "error": function (jqXHR, textStatus, errorThrown) {
+                $.get({
+                    url: nunjucks_urls['error'],
+                    cache: false
+                }).then(function(error_template){
+                    rendered_template = nunjucks.renderString(
+                            error_template, 
+                            { 
+                                'error_info': JSON.parse(jqXHR.responseText),
+                                'textStatus': textStatus,
+                                'errorThrown': errorThrown,
+                            }
+                        );
+                    $('#main_content').html(rendered_template);
+                })
+            }
         },
         "columns": [
             {
@@ -374,12 +411,11 @@ function setup_worker_datatable(site_map) {
     */
 }
 
-function setup_jobs_datatable(job_info_url, site_map) {
+function setup_jobs_datatable(nunjucks_urls, site_map) {
     var job_result_ttl = "specifies how long (in seconds) successful jobs and their results are kept. Expired jobs will be automatically deleted. Defaults to 500 seconds.";
     var job_timeout = "specifies the maximum runtime of the job before it’s interrupted and marked as failed. Its default unit is seconds and it can be an integer or a string representing an integer(e.g. 2, '2'). Furthermore, it can be a string with specify unit including hour, minute, second (e.g. '1h', '3m', '5s').";
     var job_failure_ttl = " specifies how long (in seconds) failed jobs are kept (defaults to 1 year)";
     var job_ttl = "specifies the maximum queued time (in seconds) of the job before it’s discarded. This argument defaults to None (infinite TTL).";
-    var job_info_template;
 
     /*
     from flask and jinja2's perspective all templates to be rendered by nunjucks 
@@ -388,11 +424,9 @@ function setup_jobs_datatable(job_info_url, site_map) {
     */
 
     $.get({
-        url: job_info_url,
+        url: nunjucks_urls['job_info'],
         cache: false
-    }).then(function (data) {
-        job_info_template = data;
-
+    }).then(function (job_info_template) {
         jobs_table = $('#jobs_table').DataTable({
             "serverSide": "True",
             "pageLength": 50,
@@ -416,13 +450,28 @@ function setup_jobs_datatable(job_info_url, site_map) {
                     )
                 },
                 "dataSrc": "data",
-                dataType: "json",
+                "dataType": "json",
+                "error": function (jqXHR, textStatus, errorThrown) {
+                    $.get({
+                        url: nunjucks_urls['error'],
+                        cache: false
+                    }).then(function(error_template){
+                        rendered_template = nunjucks.renderString(
+                                error_template, 
+                                { 
+                                    'error_info': JSON.parse(jqXHR.responseText),
+                                    'textStatus': textStatus,
+                                    'errorThrown': errorThrown,
+                                }
+                            );
+                        $('#main_content').html(rendered_template);
+                    })
+                }
             },
             "columns": [
                 {
                     data: "job_info",
                     render: function (data, type, row, meta) {
-                        //alert(data['job_id']);
                         if (type === 'display') {
                             //data = nunjucks.render("{{ url_for('static', filename='nunjucks/job_info.html') }}", data)
                             data = nunjucks.renderString(job_info_template, { 'job_data': data });
@@ -553,7 +602,7 @@ function on_queue_selection_change(){
     });
 }  
 
-function on_click_jobs_dashboard(nunjucks_job_info_url, sitemap){
+function on_click_jobs_dashboard(nunjucks_urls, sitemap){
     $('#jobsmenu').on('show.bs.collapse', function (e) {
         if ($(this).is(e.target)) {
             $.ajax({
@@ -562,7 +611,7 @@ function on_click_jobs_dashboard(nunjucks_job_info_url, sitemap){
                 data: inject_globals(),
                 success: function (response) {
                     $('#main_dashboard').html(response);
-                    setup_jobs_datatable(nunjucks_job_info_url, site_map);
+                    setup_jobs_datatable(nunjucks_urls, site_map);
                 },
                 error: function (rs, e) {
                     $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
@@ -572,7 +621,7 @@ function on_click_jobs_dashboard(nunjucks_job_info_url, sitemap){
     });
 }
 
-function on_click_workers_dashboard(site_map){
+function on_click_workers_dashboard(nunjucks_urls, site_map){
     $('#workers_link').on('click', function () {
         $.ajax({
             type: "GET",
@@ -580,7 +629,7 @@ function on_click_workers_dashboard(site_map){
             data: inject_globals(),
             success: function (response) {
                 $('#main_dashboard').html(response);
-                setup_worker_datatable(site_map);
+                setup_worker_datatable(nunjucks_urls, site_map);
             },
             error: function (rs, e) {
                 $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
@@ -589,7 +638,7 @@ function on_click_workers_dashboard(site_map){
     });
 }
 
-function on_click_queues_dashboard(site_map){
+function on_click_queues_dashboard(nunjucks_urls, site_map){
     $('#queues_link').on('click', function () {
         $.ajax({
             type: "GET",
@@ -597,7 +646,7 @@ function on_click_queues_dashboard(site_map){
             data: inject_globals(),
             success: function (response) {
                 $('#main_dashboard').html(response);
-                setup_queues_datatable(site_map);
+                setup_queues_datatable(nunjucks_urls, site_map);
             },
             error: function (rs, e) {
                 $('#main_dashboard').html(`<strong>` + JSON.stringify(rs) + `</strong>`);
