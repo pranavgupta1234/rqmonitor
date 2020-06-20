@@ -1,0 +1,30 @@
+<div class="row">
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+        <div class="page-header">
+            <h2 class="pageheader-title text-center">{{ errorThrown }}</h2>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+        <h3 class="text-center">{{ error_info.message }}</h3>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#traceback"
+                aria-expanded="false">
+                <span class="fas mr-3 fa-angle-down"></span>Show Traceback
+            </button>
+        </h5>
+    </div>
+    <div id="traceback" class="collapse show" style="">
+        <div class="card-body">
+            <div class="alert alert-danger mb-2" style="white-space: pre-wrap" role="alert">
+                {{ error_info.traceback }}
+            </div>
+            <a href="https://github.com/pranavgupta1234/rqmonitor/" target="_blank" class="btn btn-secondary">Submit Issue</a>
+        </div>
+    </div>
+</div>
