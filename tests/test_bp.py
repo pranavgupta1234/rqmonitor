@@ -155,6 +155,8 @@ class TestBlueprintViews(RQMonitorTestCase):
         data2_ids = [job['job_info']['job_id'] for job in data2]
         for job_id in data1_ids:
             self.assertNotIn(job_id, data2_ids)
+        for job_id in data2_ids:
+            self.assertNotIn(job_id, data1_ids)
         response3 = self.client.get('/jobs', query_string=query_string3)
         response3_json = json.loads(response3.data.decode('utf-8'))
         self.assertEqual(response3_json['draw'], 3)
@@ -164,3 +166,5 @@ class TestBlueprintViews(RQMonitorTestCase):
         data3 = response3_json['data']
         for job_data in data2:
             self.assertNotIn(job_data, data3)
+        for job_id in data1:
+            self.assertNotIn(job_id, data2)
