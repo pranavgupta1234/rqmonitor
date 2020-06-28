@@ -47,7 +47,11 @@
 ## Key Features
 
 * Redis RQ Memory Monitoring - Implemented through Lua Scripting
-  - Possibly RQ is not the only work your redis is doing and you want to keep a close eye on memory consumption of RQ namespace. Be little careful while executing it on production environment with large data as script may block your redis for some time. 
+  - Possibly RQ is not the only work your redis is doing and you want to keep a close eye on memory consumption of RQ namespace. Be little careful while executing it on production environment with large data as script may block your redis for some time.
+* Send Signals to remote workers
+  - Using rqmonitor you can suspend/resume/delete your workers for debugging purposes which can be located on same instance running rqmonitor or some other instance in your network.
+  - rqmonitor internally uses [fabric](https://github.com/fabric/fabric) for sending commands to remote workers.
+  - Make sure the instance running rqmonitor have proper access to other instances running rq workers which can be achieved by properly configuring ssh, so make sure appropriate entries are added inside ssh_config. 
 * All data population through DataTables:
   - Queues and Workers dashboard are rendered by client side DataTables so you get additional functionality of sorting, searching, robust pagination.
   - Jobs dashboard is rendered with server side option enabled of DataTables for easy loading of very large number of jobs.(Ajax Pipeling also planned in future)
@@ -56,9 +60,7 @@
 * Jobs Filtering Support
   - You can choose to view a set of jobs from certain queue with certain status.
 * Global Actions
-  - You can easily delete/empty multiple queues, jobs and suspend/resume workers.  
-* Take actions on workers
-  - Using rqmonitor you can suspend/resume your workers for debugging purposes or deletion functionality is also available but only for workers on same machine as of rqmonitor. (Later planned to send signals via fabric api).
+  - You can easily delete/empty multiple queues, jobs and suspend/resume workers. 
 * Last but not the least is beautiful UI
 * More features coming!
 
