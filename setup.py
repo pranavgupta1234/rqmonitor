@@ -38,6 +38,8 @@ setup(
         'six>=1.13.0',
         'Werkzeug>=0.16.0',
         'rq>=1.2.0',
+        'fabric>=2.5.0',
+        'invoke>=1.4.1',
     ],
     entry_points={
         'console_scripts': [

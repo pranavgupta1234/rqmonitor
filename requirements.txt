@@ -1,8 +1,8 @@
-# generated via pipreqs --savepath requirements.txt --force ./rqmonitor
+Click==7.0
 redis==3.3.11
+six==1.13.0
+invoke==1.4.1
+fabric==2.5.0
 humanize==2.4.0
 Flask==1.1.1
-Click==7.0
-six==1.13.0
-Werkzeug==0.16.0
 rq==1.2.0
