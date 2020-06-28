@@ -328,9 +328,9 @@ function setup_worker_datatable(nunjucks_urls, site_map) {
                 render: function (data, type, row, meta) {
                     if (type === 'display') {
                         data = `
-                <a href="#" data-toggle="modal" data-target="#infomodal"
-                data-worker="`+ data + `">` + data + `</a>
-                `;
+                                <a href="#" data-toggle="modal" data-target="#infomodal"
+                                data-worker="`+ data + `">` + data + `</a>
+                                `;
                     }
                     return data;
                 },
@@ -346,8 +346,8 @@ function setup_worker_datatable(nunjucks_urls, site_map) {
                     return data;
                 },
             },
+            { data: "host_ip" },
             { data: "current_job_id" },
-            { data: "success_jobs" },
             { data: "failed_jobs" },
             {
                 data: null,
@@ -355,17 +355,17 @@ function setup_worker_datatable(nunjucks_urls, site_map) {
                 render: function (data, type, row, meta) {
                     if (type === 'display') {
                         data = `
-        <a href="#" class="btn btn-danger" data-toggle="modal" data-action="delete"
-        data-target="#confirmation" data-targetclass="worker" data-id="`+ row.worker_name + `"> Delete </a>
-        `;
+                            <a href="#" class="btn btn-danger" data-toggle="modal" data-action="delete"
+                            data-target="#confirmation" data-targetclass="worker" data-id="`+ row.worker_name + `"> Delete </a>
+                            `;
                     }
                     return data;
                 },
                 className: "center",
                 defaultContent: `
-        <a href="#" class="btn btn-danger" data-toggle="modal"
-        data-target="#confirmation"> Delete </a>
-        `,
+                                <a href="#" class="btn btn-danger" data-toggle="modal"
+                                data-target="#confirmation"> Delete </a>
+                                `,
             }
         ]
     });

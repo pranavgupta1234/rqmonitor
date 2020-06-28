@@ -24,6 +24,7 @@ from rqmonitor.exceptions import RQMonitorException
 from rq.worker import Worker
 from rq.suspension import suspend, resume, is_suspended
 import logging
+import socket
 
 
 logger = logging.getLogger(__name__)
@@ -152,17 +153,22 @@ def list_workers_api():
     workers_list = Worker.all()
     rq_workers = []
     for worker in workers_list:
+        host_ip_using_name = "N/A"
+        try:
+            host_ip_using_name = socket.gethostbyname(worker.hostname)
+        except socket.gaierror as addr_error:
+            pass
+
         rq_workers.append(
             {
                 'worker_name': worker.name,
                 'listening_on': ', '.join(queue.name for queue in worker.queues),
                 'status': worker.get_state() if not is_suspended(get_current_connection()) else "suspended",
+                'host_ip': host_ip_using_name,
                 'current_job_id': worker.get_current_job_id(),
-                'success_jobs': worker.successful_job_count,
                 'failed_jobs': worker.failed_job_count,
             }
         )
-
     return {
         'data': rq_workers,
     }
