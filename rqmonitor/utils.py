@@ -5,6 +5,7 @@ import signal
 import logging
 import socket
 import zlib
+import errno
 from rq.registry import (StartedJobRegistry,
                          FinishedJobRegistry,
                          FailedJobRegistry,
@@ -106,31 +107,32 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
                 ssh_info = paramiko_ssh_config.lookup(hostname)
                 available_host_ip = ssh_info.get('hostname')
                 if available_host_ip == required_host_ip:
+                    process_owner = None
                     # make connection via fabric and send SIGINT for now
                     ssh_connection = Connection(hostname)
                     try:
                         #find owner of process https://unix.stackexchange.com/questions/284934/return-owner-of-process-given-pid
                         process_owner = ssh_connection.run('ps -o user= -p {0}'.format(worker_instance.pid))
-                        # have permission to kill so works without sudo
+                        # have permission to kill so this works without sudo
+                        # need to plan for other cases
                         process_owner = process_owner.stdout.strip(' \n\t')
-                        if process_owner == ssh_info.get('user'):
-                            result_kill = ssh_connection.run('kill -{0} {1}'.format(2, worker_instance.pid))
-                            if result_kill.failed:
-                                raise RQMonitorException("Some issue occured on running command {0.command!r} "
-                                                         "on {0.connection.host}, we got stdout:\n{0.stdout}"
-                                                         "and stderr:\n{0.stderr}".format(result_kill))
-                        else:
+                        result_kill = ssh_connection.run('kill -{0} {1}'.format(2, worker_instance.pid), hide=True)
+                        if result_kill.failed:
+                            raise RQMonitorException("Some issue occured on running command {0.command!r} "
+                                                     "on {0.connection.host}, we got stdout:\n{0.stdout}"
+                                                     "and stderr:\n{0.stderr}".format(result_kill))
+                    except UnexpectedExit as e:
+                        stdout, stderr = e.streams_for_display()
+                        # plan to accept password from user and proceed with sudo in future
+                        if "Operation not permitted" in stderr.strip(' \n\t') or e.result.exited == errno.EPERM:
                             raise RQMonitorException('Logged in user {0} does not have permission to kill worker'
                                                      ' process with pid {1} on {2} because it is owned '
                                                      ' by user {3}'.format(ssh_info.get('user'), worker_instance.pid,
-                                                                          required_host_ip, process_owner))
-                    except UnexpectedExit as e:
+                                                                           required_host_ip, process_owner))
                         raise RQMonitorException('Invoke\'s UnexpectedExit occurred with'
-                                                 'result {0} and reason {1}'.format(e.reason,
+                                                 'result {0} and reason {1}'.format(e.result,
                                                                                     e.reason))
                     return
-
-
 
 
 def list_all_queues():
