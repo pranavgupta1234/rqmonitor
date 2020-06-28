@@ -13,10 +13,13 @@ from rq.registry import (StartedJobRegistry,
 from rq.connections import resolve_connection
 from rq.utils import utcparse
 from rq.exceptions import InvalidJobOperationError
+from rqmonitor.exceptions import RQMonitorException
 from datetime import datetime
 from rq.worker import Worker
 from rq.queue import Queue
 from rq.job import Job
+from fabric import Connection, Config
+from invoke import UnexpectedExit
 
 
 logger = logging.getLogger(__name__)
@@ -84,17 +87,49 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
     def attach_rq_worker_prefix(worker_id):
         return Worker.redis_worker_namespace_prefix + worker_id
 
-    try:
-        for worker_instance in [Worker.find_by_key(attach_rq_worker_prefix(worker_id))
-                                for worker_id in worker_ids]:
-            # kill if on same instance
-            if socket.gethostname() == worker_instance.hostname.decode('utf-8'):
-                os.kill(worker_instance.pid, signal_to_pass)
-    except ValueError:
-        logger.warning('Problem in deleting workers {0}'.format(worker_ids))
-        return False
+    for worker_instance in [Worker.find_by_key(attach_rq_worker_prefix(worker_id))
+                            for worker_id in worker_ids]:
+        requested_hostname = worker_instance.hostname
+        requested_hostname = requested_hostname.decode('utf-8')
+        # kill if on same instance
+        if socket.gethostname() == requested_hostname:
+            os.kill(worker_instance.pid, signal_to_pass)
+        else:
+            required_host_ip = socket.gethostbyname(requested_hostname)
+            fabric_config_wrapper = Config()
+            # loads from user level ssh config (~/.ssh/config) and system level
+            # config /etc/ssh/ssh_config
+            fabric_config_wrapper.load_ssh_config()
+            # to use its ssh_config parser abilities
+            paramiko_ssh_config = fabric_config_wrapper.base_ssh_config
+            for hostname in paramiko_ssh_config.get_hostnames():
+                ssh_info = paramiko_ssh_config.lookup(hostname)
+                available_host_ip = ssh_info.get('hostname')
+                if available_host_ip == required_host_ip:
+                    # make connection via fabric and send SIGINT for now
+                    ssh_connection = Connection(hostname)
+                    try:
+                        #find owner of process https://unix.stackexchange.com/questions/284934/return-owner-of-process-given-pid
+                        process_owner = ssh_connection.run('ps -o user= -p {0}'.format(worker_instance.pid))
+                        # have permission to kill so works without sudo
+                        process_owner = process_owner.stdout.strip(' \n\t')
+                        if process_owner == ssh_info.get('user'):
+                            result_kill = ssh_connection.run('kill -{0} {1}'.format(2, worker_instance.pid))
+                            if result_kill.failed:
+                                raise RQMonitorException("Some issue occured on running command {0.command!r} "
+                                                         "on {0.connection.host}, we got stdout:\n{0.stdout}"
+                                                         "and stderr:\n{0.stderr}".format(result_kill))
+                        else:
+                            raise RQMonitorException('Logged in user {0} does not have permission to kill worker'
+                                                     ' process with pid {1} on {2} because it is owned '
+                                                     ' by user {3}'.format(ssh_info.get('user'), worker_instance.pid,
+                                                                          required_host_ip, process_owner))
+                    except UnexpectedExit as e:
+                        raise RQMonitorException('Invoke\'s UnexpectedExit occurred with'
+                                                 'result {0} and reason {1}'.format(e.reason,
+                                                                                    e.reason))
+                    return
 
-    return True
 
 
 
