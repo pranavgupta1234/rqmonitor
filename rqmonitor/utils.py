@@ -124,14 +124,15 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
                     except UnexpectedExit as e:
                         stdout, stderr = e.streams_for_display()
                         # plan to accept password from user and proceed with sudo in future
-                        if "Operation not permitted" in stderr.strip(' \n\t') or e.result.exited == errno.EPERM:
+                        if "Operation not permitted" in stderr.strip(' \n\t'):
                             raise RQMonitorException('Logged in user {0} does not have permission to kill worker'
                                                      ' process with pid {1} on {2} because it is owned '
                                                      ' by user {3}'.format(ssh_info.get('user'), worker_instance.pid,
                                                                            required_host_ip, process_owner))
                         raise RQMonitorException('Invoke\'s UnexpectedExit occurred with'
-                                                 'result {0} and reason {1}'.format(e.result,
-                                                                                    e.reason))
+                                                 'stdout: {0}\nstderr: {1}\nresult: {2}\nreason {3}'.format(stdout.strip(' \n\t'),
+                                                                                                            stderr.strip(' \n\t'),
+                                                                                                            e.result, e.reason))
                     return
 
 
