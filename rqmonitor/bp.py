@@ -153,7 +153,7 @@ def list_workers_api():
     workers_list = Worker.all()
     rq_workers = []
     for worker in workers_list:
-        host_ip_using_name = "N/A"
+        host_ip_using_name = "Unresolved"
         try:
             host_ip_using_name = socket.gethostbyname(worker.hostname)
         except socket.gaierror as addr_error:
