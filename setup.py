@@ -24,7 +24,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pranavgupta1234/rqmonitor",
-    download_url="https://github.com/pranavgupta1234/rqmonitor/archive/v_0.0.1.tar.gz",
+    download_url="https://github.com/pranavgupta1234/rqmonitor/archive/v_0.0.9.tar.gz",
     license="Apache Software License",
     packages=find_packages(exclude=('tests',)),
     include_package_data=True,
