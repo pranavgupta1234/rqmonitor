@@ -7,19 +7,19 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title>RQ Monitor</title>
         <!-- Bootstrap CSS -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='assets/vendor/fonts/circular-std/style.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='assets/libs/css/style.css') }}">
+        <link rel="stylesheet" href="{{ url_for('rqmonitor.static', filename='assets/vendor/bootstrap/css/bootstrap.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('rqmonitor.static', filename='assets/vendor/fonts/circular-std/style.css') }}">
+        <link rel="stylesheet" href="{{ url_for('rqmonitor.static', filename='assets/libs/css/style.css') }}">
         <link rel="stylesheet"
-            href="{{ url_for('static', filename='assets/vendor/fonts/fontawesome/css/fontawesome-all.css') }}">
+            href="{{ url_for('rqmonitor.static', filename='assets/vendor/fonts/fontawesome/css/fontawesome-all.css') }}">
         <link rel="stylesheet" type="text/css"
-            href="{{ url_for('static', filename='assets/vendor/datatables/css/dataTables.bootstrap4.css') }}">
-        <link href="{{ url_for('static', filename='assets/vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
+            href="{{ url_for('rqmonitor.static', filename='assets/vendor/datatables/css/dataTables.bootstrap4.css') }}">
+        <link href="{{ url_for('rqmonitor.static', filename='assets/vendor/select2/css/select2.min.css') }}" rel="stylesheet" />
     </head>
 
     <body>
 
-        <script src="{{ url_for('static', filename='assets/vendor/jquery/jquery-3.3.1.min.js') }}"></script>
+        <script src="{{ url_for('rqmonitor.static', filename='assets/vendor/jquery/jquery-3.3.1.min.js') }}"></script>
         <div class="dashboard-main-wrapper">
             {% include 'rqmonitor/top_bar.html' %}
             {% include 'rqmonitor/side_navbar.html' %}
@@ -29,15 +29,15 @@
             {% include 'rqmonitor/confirmation_modal.html' %}
             {% include 'rqmonitor/info_modal.html' %}
         </div>
-        <script src="{{ url_for('static', filename='assets/libs/js/main-js.js') }}"></script>
+        <script src="{{ url_for('rqmonitor.static', filename='assets/libs/js/main-js.js') }}"></script>
         <script type="text/javascript">
             
             $(document).ready(function () {
 
                 site_map = JSON.parse('{{ site_map|tojson }}'); 
                 nunjucks_template_urls = {
-                    'job_info': "{{ url_for('static', filename='nunjucks/job_info.html') }}",
-                    'error': "{{ url_for('static', filename='nunjucks/error.html') }}"
+                    'job_info': "{{ url_for('rqmonitor.static', filename='nunjucks/job_info.html') }}",
+                    'error': "{{ url_for('rqmonitor.static', filename='nunjucks/error.html') }}"
                 };
                 
                 // disable alert box for datatables ajax
@@ -63,13 +63,13 @@
 
         </script>
 
-        <script src="{{ url_for('static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.js') }}"></script>
-        <script src="{{ url_for('static', filename='assets/vendor/slimscroll/jquery.slimscroll.js') }}"></script>
-        <script src="{{ url_for('static', filename='assets/vendor/select2/js/select2.min.js') }}"></script>
-        <script src="{{ url_for('static', filename='assets/vendor/nunjucks/nunjucks.min.js') }}"></script>
-        <script src="{{ url_for('static', filename='assets/vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
+        <script src="{{ url_for('rqmonitor.static', filename='assets/vendor/bootstrap/js/bootstrap.bundle.js') }}"></script>
+        <script src="{{ url_for('rqmonitor.static', filename='assets/vendor/slimscroll/jquery.slimscroll.js') }}"></script>
+        <script src="{{ url_for('rqmonitor.static', filename='assets/vendor/select2/js/select2.min.js') }}"></script>
+        <script src="{{ url_for('rqmonitor.static', filename='assets/vendor/nunjucks/nunjucks.min.js') }}"></script>
+        <script src="{{ url_for('rqmonitor.static', filename='assets/vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
         <script
-            src="{{ url_for('static', filename='assets/vendor/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
+            src="{{ url_for('rqmonitor.static', filename='assets/vendor/datatables/js/dataTables.bootstrap4.min.js') }}"></script>
     </body>
 
 </html>
