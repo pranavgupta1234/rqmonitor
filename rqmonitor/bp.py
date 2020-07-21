@@ -95,8 +95,9 @@ def home(redis_instance_index):
     rq_possible_job_status = list_all_possible_job_status()
     site_map = {}
     for rule in current_app.url_map.iter_rules():
-        if "static" not in rule.endpoint:
-            site_map[rule.endpoint] = url_for(rule.endpoint)
+        if rule.endpoint.startswith('rqmonitor'):
+            if rule.endpoint != 'rqmonitor.static':
+                site_map[rule.endpoint] = url_for(rule.endpoint)
 
     return render_template('rqmonitor/index.html',
                                 rq_queues_list= rq_queues_list,
