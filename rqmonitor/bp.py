@@ -159,6 +159,8 @@ def list_workers_api():
             host_ip_using_name = socket.gethostbyname(worker.hostname)
         except socket.gaierror as addr_error:
             pass
+        except TypeError as e:
+            pass
 
         rq_workers.append(
             {
