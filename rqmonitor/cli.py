@@ -210,7 +210,7 @@ def check_url(url, decode_components=False):
 )
 @click.option(
     "--extra-path",
-    default=".",
+    default=["."],
     multiple=True,
     help="Append specified directories to sys.path",
 )
