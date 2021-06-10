@@ -5,4 +5,4 @@ invoke==1.4.1
 fabric==2.5.0
 humanize==2.4.0
 Flask==1.1.1
-rq==1.2.0
+rq==1.4.0
