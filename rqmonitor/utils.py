@@ -91,7 +91,10 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
     for worker_instance in [Worker.find_by_key(attach_rq_worker_prefix(worker_id))
                             for worker_id in worker_ids]:
         requested_hostname = worker_instance.hostname
-        requested_hostname = requested_hostname.decode('utf-8')
+        
+        if requested_hostname is not None:
+            requested_hostname = requested_hostname.decode('utf-8')
+
         # kill if on same instance
         if socket.gethostname() == requested_hostname:
             os.kill(worker_instance.pid, signal_to_pass)
