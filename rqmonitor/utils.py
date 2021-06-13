@@ -94,6 +94,8 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
         
         if requested_hostname is not None:
             requested_hostname = requested_hostname.decode('utf-8')
+        else:
+            continue
 
         # kill if on same instance
         if socket.gethostname() == requested_hostname:
