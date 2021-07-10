@@ -104,9 +104,8 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
     ]:
         requested_hostname = worker_instance.hostname
 
-        if requested_hostname is not None:
-            requested_hostname = requested_hostname.decode("utf-8")
-        else:
+        if requested_hostname is None:
+            logger.info("Worker hostname not available, skipping deletion...")
             continue
 
         # kill if on same instance

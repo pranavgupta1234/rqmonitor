@@ -354,7 +354,7 @@ def worker_info_api():
             Worker.redis_worker_namespace_prefix + worker_id
         )
         return {
-            "worker_host_name": worker_instance.hostname.decode("utf-8")
+            "worker_host_name": worker_instance.hostname
             if worker_instance.hostname is not None
             else "None",
             "worker_ttl": worker_instance.default_worker_ttl,
