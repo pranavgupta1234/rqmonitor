@@ -1,8 +1,7 @@
 """
 Taken as reference from RQ's testing module
 """
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
 
@@ -14,15 +13,14 @@ from rqmonitor.cli import create_app_with_blueprint
 
 def find_empty_redis_database():
     """Tries to connect to a random Redis database (starting from 4), and
-        will use/connect it when no keys are in there.
+    will use/connect it when no keys are in there.
     """
     for dbnum in range(4, 16):
         testconn = Redis(db=dbnum)
         empty = testconn.dbsize() == 0
         if empty:
             return dbnum, testconn
-    assert False, 'No empty Redis database found to run tests in.'
-
+    assert False, "No empty Redis database found to run tests in."
 
 
 class RQMonitorTestCase(unittest.TestCase):
@@ -48,9 +46,10 @@ class RQMonitorTestCase(unittest.TestCase):
 
         cls.app = create_app_with_blueprint()
         cls.app.testing = True
-        cls.app.config['RQ_MONITOR_REDIS_URL'] = 'redis://127.0.0.1:6379/{0}'.format(dbnum)
+        cls.app.config["RQ_MONITOR_REDIS_URL"] = "redis://127.0.0.1:6379/{0}".format(
+            dbnum
+        )
         cls.client = cls.app.test_client()
-
 
     def setUp(self):
         # Flush beforewards (we like our hygiene)
@@ -60,11 +59,10 @@ class RQMonitorTestCase(unittest.TestCase):
         # Flush afterwards
         self.testconn.flushdb()
 
-
     @classmethod
     def tearDownClass(cls):
         logging.disable(logging.NOTSET)
 
         # Pop the connection to Redis,
         testconn = pop_connection()
-        assert testconn == cls.testconn, 'Corrupted Redis connection stack'
+        assert testconn == cls.testconn, "Corrupted Redis connection stack"

@@ -7,9 +7,11 @@ import logging
 import os
 import sys
 from urllib.parse import quote as urlquote, urlunparse
-from redis.connection import (URL_QUERY_ARGUMENT_PARSERS,
-                              UnixDomainSocketConnection,
-                              SSLConnection)
+from redis.connection import (
+    URL_QUERY_ARGUMENT_PARSERS,
+    UnixDomainSocketConnection,
+    SSLConnection,
+)
 from urllib.parse import urlparse, parse_qs, unquote
 
 import click
@@ -41,8 +43,13 @@ def add_basic_auth(blueprint, username, password, realm="RQ Monitor"):
             )
 
 
-def create_app_with_blueprint(config=None, username=None, password=None,
-                              url_prefix='', blueprint=monitor_blueprint):
+def create_app_with_blueprint(
+    config=None,
+    username=None,
+    password=None,
+    url_prefix="",
+    blueprint=monitor_blueprint,
+):
     """Return Flask app with default configuration and registered blueprint."""
     app = Flask(__name__)
 
@@ -61,6 +68,7 @@ def create_app_with_blueprint(config=None, username=None, password=None,
     app.register_blueprint(blueprint, url_prefix=url_prefix)
 
     return app
+
 
 def check_url(url, decode_components=False):
     """
@@ -118,9 +126,9 @@ def check_url(url, decode_components=False):
                 try:
                     url_options[name] = parser(value[0])
                 except (TypeError, ValueError):
-                    logger.warning(UserWarning(
-                        "Invalid value for `%s` in connection URL." % name
-                    ))
+                    logger.warning(
+                        UserWarning("Invalid value for `%s` in connection URL." % name)
+                    )
             else:
                 url_options[name] = value[0]
 
@@ -136,36 +144,42 @@ def check_url(url, decode_components=False):
         hostname = url.hostname
 
     # We only support redis://, rediss:// and unix:// schemes.
-    if url.scheme == 'unix':
-        url_options.update({
-            'username': username,
-            'password': password,
-            'path': path,
-            'connection_class': UnixDomainSocketConnection,
-        })
+    if url.scheme == "unix":
+        url_options.update(
+            {
+                "username": username,
+                "password": password,
+                "path": path,
+                "connection_class": UnixDomainSocketConnection,
+            }
+        )
 
-    elif url.scheme in ('redis', 'rediss'):
-        url_options.update({
-            'host': hostname,
-            'port': int(url.port or 6379),
-            'username': username,
-            'password': password,
-        })
+    elif url.scheme in ("redis", "rediss"):
+        url_options.update(
+            {
+                "host": hostname,
+                "port": int(url.port or 6379),
+                "username": username,
+                "password": password,
+            }
+        )
 
         # If there's a path argument, use it as the db argument if a
         # querystring value wasn't specified
-        if 'db' not in url_options and path:
+        if "db" not in url_options and path:
             try:
-                url_options['db'] = int(path.replace('/', ''))
+                url_options["db"] = int(path.replace("/", ""))
             except (AttributeError, ValueError):
                 pass
 
-        if url.scheme == 'rediss':
-            url_options['connection_class'] = SSLConnection
+        if url.scheme == "rediss":
+            url_options["connection_class"] = SSLConnection
     else:
-        valid_schemes = ', '.join(('redis://', 'rediss://', 'unix://'))
-        raise ValueError('Redis URL must specify one of the following '
-                         'schemes (%s)' % valid_schemes)
+        valid_schemes = ", ".join(("redis://", "rediss://", "unix://"))
+        raise ValueError(
+            "Redis URL must specify one of the following "
+            "schemes (%s)" % valid_schemes
+        )
 
     return True
 
@@ -247,7 +261,9 @@ def run(
 
     click.echo("RQ Monitor version {}".format(VERSION))
 
-    app = create_app_with_blueprint(config, username, password, url_prefix, monitor_blueprint)
+    app = create_app_with_blueprint(
+        config, username, password, url_prefix, monitor_blueprint
+    )
     app.config["RQ_MONITOR_REDIS_URL"] = redis_url
     app.config["RQ_MONITOR_REFRESH_INTERVAL"] = refresh_interval
 
@@ -269,5 +285,6 @@ def run(
 def main():
     run(auto_envvar_prefix="RQ_MONITOR")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
