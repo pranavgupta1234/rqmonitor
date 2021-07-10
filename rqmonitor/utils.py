@@ -6,11 +6,13 @@ import logging
 import socket
 import zlib
 import errno
-from rq.registry import (StartedJobRegistry,
-                         FinishedJobRegistry,
-                         FailedJobRegistry,
-                         DeferredJobRegistry,
-                         ScheduledJobRegistry)
+from rq.registry import (
+    StartedJobRegistry,
+    FinishedJobRegistry,
+    FailedJobRegistry,
+    DeferredJobRegistry,
+    ScheduledJobRegistry,
+)
 from rq.connections import resolve_connection
 from rq.utils import utcparse
 from rq.exceptions import InvalidJobOperationError
@@ -29,19 +31,25 @@ logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
 
+REGISTRIES = [
+    StartedJobRegistry,
+    FinishedJobRegistry,
+    FailedJobRegistry,
+    DeferredJobRegistry,
+    ScheduledJobRegistry,
+]
 
-REGISTRIES = [StartedJobRegistry, FinishedJobRegistry,
-              FailedJobRegistry, DeferredJobRegistry,
-              ScheduledJobRegistry]
-
-JobStatus = ['queued', 'finished', 'failed', 'started', 'deferred', 'scheduled']
+JobStatus = ["queued", "finished", "failed", "started", "deferred", "scheduled"]
 
 
 def create_redis_connection(redis_url):
     return redis.Redis.from_url(redis_url)
 
+
 def send_signal_worker(worker_id):
-    worker_instance = Worker.find_by_key(Worker.redis_worker_namespace_prefix+worker_id)
+    worker_instance = Worker.find_by_key(
+        Worker.redis_worker_namespace_prefix + worker_id
+    )
     worker_instance.request_stop(signum=2, frame=5)
 
 
@@ -53,6 +61,7 @@ def delete_queue(queue_id):
     As no specific exception is raised for below method
     we are using general Exception class for now
     """
+
     def attach_rq_queue_prefix(queue_id):
         return Queue.redis_queue_namespace_prefix + queue_id
 
@@ -68,6 +77,7 @@ def empty_queue(queue_id):
     As no specific exception is raised for below method
     we are using general Exception class for now
     """
+
     def attach_rq_queue_prefix(queue_id):
         return Queue.redis_queue_namespace_prefix + queue_id
 
@@ -88,12 +98,14 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
     def attach_rq_worker_prefix(worker_id):
         return Worker.redis_worker_namespace_prefix + worker_id
 
-    for worker_instance in [Worker.find_by_key(attach_rq_worker_prefix(worker_id))
-                            for worker_id in worker_ids]:
+    for worker_instance in [
+        Worker.find_by_key(attach_rq_worker_prefix(worker_id))
+        for worker_id in worker_ids
+    ]:
         requested_hostname = worker_instance.hostname
-        
+
         if requested_hostname is not None:
-            requested_hostname = requested_hostname.decode('utf-8')
+            requested_hostname = requested_hostname.decode("utf-8")
         else:
             continue
 
@@ -110,34 +122,51 @@ def delete_workers(worker_ids, signal_to_pass=signal.SIGINT):
             paramiko_ssh_config = fabric_config_wrapper.base_ssh_config
             for hostname in paramiko_ssh_config.get_hostnames():
                 ssh_info = paramiko_ssh_config.lookup(hostname)
-                available_host_ip = ssh_info.get('hostname')
+                available_host_ip = ssh_info.get("hostname")
                 if available_host_ip == required_host_ip:
                     process_owner = None
                     # make connection via fabric and send SIGINT for now
                     ssh_connection = Connection(hostname)
                     try:
-                        #find owner of process https://unix.stackexchange.com/questions/284934/return-owner-of-process-given-pid
-                        process_owner = ssh_connection.run('ps -o user= -p {0}'.format(worker_instance.pid))
+                        # find owner of process https://unix.stackexchange.com/questions/284934/return-owner-of-process-given-pid
+                        process_owner = ssh_connection.run(
+                            "ps -o user= -p {0}".format(worker_instance.pid)
+                        )
                         # have permission to kill so this works without sudo
                         # need to plan for other cases
-                        process_owner = process_owner.stdout.strip(' \n\t')
-                        result_kill = ssh_connection.run('kill -{0} {1}'.format(2, worker_instance.pid), hide=True)
+                        process_owner = process_owner.stdout.strip(" \n\t")
+                        result_kill = ssh_connection.run(
+                            "kill -{0} {1}".format(2, worker_instance.pid), hide=True
+                        )
                         if result_kill.failed:
-                            raise RQMonitorException("Some issue occured on running command {0.command!r} "
-                                                     "on {0.connection.host}, we got stdout:\n{0.stdout}"
-                                                     "and stderr:\n{0.stderr}".format(result_kill))
+                            raise RQMonitorException(
+                                "Some issue occured on running command {0.command!r} "
+                                "on {0.connection.host}, we got stdout:\n{0.stdout}"
+                                "and stderr:\n{0.stderr}".format(result_kill)
+                            )
                     except UnexpectedExit as e:
                         stdout, stderr = e.streams_for_display()
                         # plan to accept password from user and proceed with sudo in future
-                        if "Operation not permitted" in stderr.strip(' \n\t'):
-                            raise RQMonitorException('Logged in user {0} does not have permission to kill worker'
-                                                     ' process with pid {1} on {2} because it is owned '
-                                                     ' by user {3}'.format(ssh_info.get('user'), worker_instance.pid,
-                                                                           required_host_ip, process_owner))
-                        raise RQMonitorException('Invoke\'s UnexpectedExit occurred with'
-                                                 'stdout: {0}\nstderr: {1}\nresult: {2}\nreason {3}'.format(stdout.strip(' \n\t'),
-                                                                                                            stderr.strip(' \n\t'),
-                                                                                                            e.result, e.reason))
+                        if "Operation not permitted" in stderr.strip(" \n\t"):
+                            raise RQMonitorException(
+                                "Logged in user {0} does not have permission to kill worker"
+                                " process with pid {1} on {2} because it is owned "
+                                " by user {3}".format(
+                                    ssh_info.get("user"),
+                                    worker_instance.pid,
+                                    required_host_ip,
+                                    process_owner,
+                                )
+                            )
+                        raise RQMonitorException(
+                            "Invoke's UnexpectedExit occurred with"
+                            "stdout: {0}\nstderr: {1}\nresult: {2}\nreason {3}".format(
+                                stdout.strip(" \n\t"),
+                                stderr.strip(" \n\t"),
+                                e.result,
+                                e.reason,
+                            )
+                        )
                     return
 
 
@@ -163,13 +192,19 @@ def list_all_queues_names():
 
 
 # a bit hacky for now
-def validate_job_data(val, default="None", humanize_func=None,
-                      with_utcparse=False, relative_to_now=False, append_s=False):
+def validate_job_data(
+    val,
+    default="None",
+    humanize_func=None,
+    with_utcparse=False,
+    relative_to_now=False,
+    append_s=False,
+):
     if not val:
         return default
 
     if humanize_func == None and append_s == True:
-        return str(val)+"s"
+        return str(val) + "s"
     elif humanize_func == None:
         return val
     else:
@@ -195,24 +230,38 @@ def reformat_job_data(job: Job):
     return {
         "job_info": {
             "job_id": validate_job_data(job.get_id()),
-            "job_description": validate_job_data(serialized_job.get('description')),
-            "job_exc_info": validate_job_data(zlib.decompress(serialized_job.get('exc_info')).decode('utf-8')
-                                              if serialized_job.get('exc_info') is not None
-                                              else None),
-            "job_status": validate_job_data(serialized_job.get('status')),
-            "job_queue": validate_job_data(serialized_job.get('origin')),
-            "job_created_time_humanize": validate_job_data(serialized_job.get('created_at'),
-                                                           humanize_func=humanize.naturaltime,
-                                                           with_utcparse=True,
-                                                           relative_to_now=True),
-            "job_enqueued_time_humanize": validate_job_data(serialized_job.get('enqueued_at'),
-                                                           humanize_func=humanize.naturaltime,
-                                                           with_utcparse=True,
-                                                           relative_to_now=True),
-            "job_ttl": validate_job_data(serialized_job.get('ttl'), default='Infinite', append_s=True),
-            "job_timeout": validate_job_data(serialized_job.get('timeout'), default='180s', append_s=True),
-            "job_result_ttl": validate_job_data(serialized_job.get('result_ttl'), default='500s', append_s=True),
-            "job_fail_ttl": validate_job_data(serialized_job.get('failure_ttl'), default='1yr', append_s=True),
+            "job_description": validate_job_data(serialized_job.get("description")),
+            "job_exc_info": validate_job_data(
+                zlib.decompress(serialized_job.get("exc_info")).decode("utf-8")
+                if serialized_job.get("exc_info") is not None
+                else None
+            ),
+            "job_status": validate_job_data(serialized_job.get("status")),
+            "job_queue": validate_job_data(serialized_job.get("origin")),
+            "job_created_time_humanize": validate_job_data(
+                serialized_job.get("created_at"),
+                humanize_func=humanize.naturaltime,
+                with_utcparse=True,
+                relative_to_now=True,
+            ),
+            "job_enqueued_time_humanize": validate_job_data(
+                serialized_job.get("enqueued_at"),
+                humanize_func=humanize.naturaltime,
+                with_utcparse=True,
+                relative_to_now=True,
+            ),
+            "job_ttl": validate_job_data(
+                serialized_job.get("ttl"), default="Infinite", append_s=True
+            ),
+            "job_timeout": validate_job_data(
+                serialized_job.get("timeout"), default="180s", append_s=True
+            ),
+            "job_result_ttl": validate_job_data(
+                serialized_job.get("result_ttl"), default="500s", append_s=True
+            ),
+            "job_fail_ttl": validate_job_data(
+                serialized_job.get("failure_ttl"), default="1yr", append_s=True
+            ),
         },
     }
 
@@ -229,9 +278,9 @@ def get_queue(queue):
         if queue.startswith(Queue.redis_queue_namespace_prefix):
             return Queue.from_queue_key(queue)
         else:
-            return Queue.from_queue_key(Queue.redis_queue_namespace_prefix+queue)
+            return Queue.from_queue_key(Queue.redis_queue_namespace_prefix + queue)
 
-    raise TypeError('{0} is not of class {1} or {2}'.format(queue, str, Queue))
+    raise TypeError("{0} is not of class {1} or {2}".format(queue, str, Queue))
 
 
 def list_jobs_on_queue(queue):
@@ -274,24 +323,24 @@ def list_jobs_in_queue_registry(queue, registry, start, end):
     :return: list of all jobs matching above criteria
     """
     queue = get_queue(queue)
-    if registry == StartedJobRegistry or registry == 'started':
+    if registry == StartedJobRegistry or registry == "started":
         job_ids = queue.started_job_registry.get_job_ids(start, end)
         return [Job.fetch(job_id) for job_id in job_ids]
-    elif registry == FinishedJobRegistry or registry == 'finished':
+    elif registry == FinishedJobRegistry or registry == "finished":
         job_ids = queue.finished_job_registry.get_job_ids(start, end)
         return [Job.fetch(job_id) for job_id in job_ids]
-    elif registry == FailedJobRegistry or registry == 'failed':
+    elif registry == FailedJobRegistry or registry == "failed":
         job_ids = queue.failed_job_registry.get_job_ids(start, end)
         return [Job.fetch(job_id) for job_id in job_ids]
-    elif registry == DeferredJobRegistry or registry == 'deferred':
+    elif registry == DeferredJobRegistry or registry == "deferred":
         job_ids = queue.deferred_job_registry.get_job_ids(start, end)
         return [Job.fetch(job_id) for job_id in job_ids]
-    elif registry == ScheduledJobRegistry or registry == 'scheduled':
+    elif registry == ScheduledJobRegistry or registry == "scheduled":
         job_ids = queue.scheduled_job_registry.get_job_ids(start, end)
         return [Job.fetch(job_id) for job_id in job_ids]
     # although not implemented as registry this is for ease
-    elif registry == 'queued':
-        return queue.get_jobs(start, end-start+1)
+    elif registry == "queued":
+        return queue.get_jobs(start, end - start + 1)
     else:
         return []
 
@@ -303,40 +352,42 @@ def list_job_ids_in_queue_registry(queue, registry, start=0, end=-1):
     :return: list of all jobs matching above criteria
     """
     queue = get_queue(queue)
-    if registry == StartedJobRegistry or registry == 'started':
+    if registry == StartedJobRegistry or registry == "started":
         return queue.started_job_registry.get_job_ids(start, end)
-    elif registry == FinishedJobRegistry or registry == 'finished':
+    elif registry == FinishedJobRegistry or registry == "finished":
         return queue.finished_job_registry.get_job_ids(start, end)
-    elif registry == FailedJobRegistry or registry == 'failed':
+    elif registry == FailedJobRegistry or registry == "failed":
         return queue.failed_job_registry.get_job_ids(start, end)
-    elif registry == DeferredJobRegistry or registry == 'deferred':
+    elif registry == DeferredJobRegistry or registry == "deferred":
         return queue.deferred_job_registry.get_job_ids(start, end)
-    elif registry == ScheduledJobRegistry or registry == 'scheduled':
+    elif registry == ScheduledJobRegistry or registry == "scheduled":
         return queue.scheduled_job_registry.get_job_ids(start, end)
     # although not implemented as registry this is for ease and uniformity
-    elif registry == 'queued':
-        return queue.get_job_ids(start, end-start+1)
+    elif registry == "queued":
+        return queue.get_job_ids(start, end - start + 1)
     else:
         return []
 
 
 def empty_registry(registry_name, queue_name, connection=None):
     """Empties a specific registry for a specific queue, Not in RQ, implemented
-            here for performance reasons
+    here for performance reasons
     """
     redis_connection = resolve_connection(connection)
-    queue_instance = Queue.from_queue_key(Queue.redis_queue_namespace_prefix+queue_name)
+    queue_instance = Queue.from_queue_key(
+        Queue.redis_queue_namespace_prefix + queue_name
+    )
 
     registry_instance = None
-    if registry_name == 'failed':
+    if registry_name == "failed":
         registry_instance = queue_instance.failed_job_registry
-    elif registry_name == 'started':
+    elif registry_name == "started":
         registry_instance = queue_instance.started_job_registry
-    elif registry_name == 'scheduled':
+    elif registry_name == "scheduled":
         registry_instance = queue_instance.scheduled_job_registry
-    elif registry_name == 'deferred':
+    elif registry_name == "deferred":
         registry_instance = queue_instance.deferred_job_registry
-    elif registry_name == 'finished':
+    elif registry_name == "finished":
         registry_instance = queue_instance.finished_job_registry
 
     script = """
@@ -355,7 +406,11 @@ def empty_registry(registry_name, queue_name, connection=None):
             count = count + 1
         end
         return count
-    """.format(registry_instance.job_class.redis_job_namespace_prefix).encode("utf-8")
+    """.format(
+        registry_instance.job_class.redis_job_namespace_prefix
+    ).encode(
+        "utf-8"
+    )
     script = redis_connection.register_script(script)
     return script(keys=[registry_instance.key])
 
@@ -363,7 +418,7 @@ def empty_registry(registry_name, queue_name, connection=None):
 def delete_all_jobs_in_queues_registries(queues, registries):
     for queue in queues:
         for registry in registries:
-            if registry == 'queued':
+            if registry == "queued":
                 # removes all jobs from queue and from job namespace
                 get_queue(queue).empty()
             else:
@@ -399,18 +454,18 @@ def job_count_in_queue_registry(queue, registry):
     :return: list of all jobs matching above criteria
     """
     queue = get_queue(queue)
-    if registry == StartedJobRegistry or registry == 'started':
+    if registry == StartedJobRegistry or registry == "started":
         return len(queue.started_job_registry)
-    elif registry == FinishedJobRegistry or registry == 'finished':
+    elif registry == FinishedJobRegistry or registry == "finished":
         return len(queue.finished_job_registry)
-    elif registry == FailedJobRegistry or registry == 'failed':
+    elif registry == FailedJobRegistry or registry == "failed":
         return len(queue.failed_job_registry)
-    elif registry == DeferredJobRegistry or registry == 'deferred':
+    elif registry == DeferredJobRegistry or registry == "deferred":
         return len(queue.deferred_job_registry)
-    elif registry == ScheduledJobRegistry or registry == 'scheduled':
+    elif registry == ScheduledJobRegistry or registry == "scheduled":
         return len(queue.scheduled_job_registry)
     # although not implemented as registry this is for ease
-    elif registry == 'queued':
+    elif registry == "queued":
         return len(queue)
     else:
         return 0
@@ -422,7 +477,7 @@ def get_redis_memory_used(connection=None):
     :param connection:
     :return:
     """
-    RQ_REDIS_NAMESPACE = 'rq:*'
+    RQ_REDIS_NAMESPACE = "rq:*"
     redis_connection = resolve_connection(connection)
     script = """
         local sum = 0;
@@ -497,8 +552,9 @@ def resolve_jobs(job_counts, start, length):
     for i, block in enumerate(job_counts[start_block:]):
         current_block_length = block[2]
         while cursor < current_block_length:
-            current_block_jobs = list_jobs_in_queue_registry(block[0], block[1], cursor,
-                                                             cursor+length-1)
+            current_block_jobs = list_jobs_in_queue_registry(
+                block[0], block[1], cursor, cursor + length - 1
+            )
             cursor += length
             jobs.extend(current_block_jobs)
             if len(jobs) >= length:

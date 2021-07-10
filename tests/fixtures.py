@@ -4,8 +4,7 @@ Taken from RQ's test fixtures
 This file contains all jobs that are used in tests.  Each of these test
 fixtures has a slighty different characteristics.
 """
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 import time
@@ -25,8 +24,8 @@ def say_pid():
 def say_hello(name=None):
     """A job with a single argument and a return value."""
     if name is None:
-        name = 'Stranger'
-    return 'Hi there, %s!' % (name,)
+        name = "Stranger"
+    return "Hi there, %s!" % (name,)
 
 
 def say_hello_unicode(name=None):
@@ -54,8 +53,8 @@ def some_calculation(x, y, z=1):
 def create_file(path):
     """Creates a file at the given path.  Actually, leaves evidence that the
     job ran."""
-    with open(path, 'w') as f:
-        f.write('Just a sentinel.')
+    with open(path, "w") as f:
+        f.write("Just a sentinel.")
 
 
 def create_file_after_timeout(path, timeout):
@@ -99,19 +98,20 @@ class Number(object):
 
 class CallableObject(object):
     def __call__(self):
-        return u"I'm callable"
+        return "I'm callable"
 
 
 class UnicodeStringObject(object):
     def __repr__(self):
         if PY2:
-            return u'é'.encode('utf-8')
+            return "é".encode("utf-8")
         else:
-            return u'é'
+            return "é"
 
 
 with Connection():
-    @job(queue='default')
+
+    @job(queue="default")
     def decorated_job(x, y):
         return x + y
 
@@ -122,7 +122,7 @@ def black_hole(job, *exc_info):
 
 
 def add_meta(job, *exc_info):
-    job.meta = {'foo': 1}
+    job.meta = {"foo": 1}
     job.save()
     return True
 
@@ -131,13 +131,13 @@ def save_key_ttl(key):
     # Stores key ttl in meta
     job = get_current_job()
     ttl = job.connection.ttl(key)
-    job.meta = {'ttl': ttl}
+    job.meta = {"ttl": ttl}
     job.save_meta()
 
 
 def long_running_job(timeout=10):
     time.sleep(timeout)
-    return 'Done sleeping...'
+    return "Done sleeping..."
 
 
 def run_dummy_heroku_worker(sandbox, _imminent_shutdown_delay):
@@ -147,20 +147,20 @@ def run_dummy_heroku_worker(sandbox, _imminent_shutdown_delay):
     :param sandbox: directory to create files in
     :param _imminent_shutdown_delay: delay to use for HerokuWorker
     """
-    sys.stderr = open(os.path.join(sandbox, 'stderr.log'), 'w')
+    sys.stderr = open(os.path.join(sandbox, "stderr.log"), "w")
 
     class TestHerokuWorker(HerokuWorker):
         imminent_shutdown_delay = _imminent_shutdown_delay
 
         def perform_job(self, job, queue):
-            create_file(os.path.join(sandbox, 'started'))
+            create_file(os.path.join(sandbox, "started"))
             # have to loop here rather than one sleep to avoid holding the GIL
             # and preventing signals being received
             for i in range(20):
                 time.sleep(0.1)
-            create_file(os.path.join(sandbox, 'finished'))
+            create_file(os.path.join(sandbox, "finished"))
 
-    w = TestHerokuWorker(Queue('dummy'))
+    w = TestHerokuWorker(Queue("dummy"))
     w.main_work_horse(None, None)
 
 
@@ -179,7 +179,8 @@ def kill_worker(pid, double_kill, interval=0.5):
 
 
 class Serializer(object):
-    def loads(self): pass
+    def loads(self):
+        pass
 
-    def dumps(self): pass
-
+    def dumps(self):
+        pass
