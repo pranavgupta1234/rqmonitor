@@ -3,10 +3,9 @@ import sys
 import os
 import redis
 from rq import pop_connection, push_connection
+from rqmonitor.cli import create_app_with_blueprint
 
 sys.path.insert(0, os.path.join(os.getcwd(), "../"))
-
-from rqmonitor.cli import create_app_with_blueprint
 
 HTTP_OK = 200
 

@@ -5,6 +5,7 @@ MANIFEST
 *.log
 *.pid
 *.txt
+*.iml
 
 # C extensions
 *.so
