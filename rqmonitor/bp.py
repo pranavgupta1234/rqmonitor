@@ -27,6 +27,7 @@ from rqmonitor.decorators import cache_control_no_store, catch_global_exception
 from rqmonitor.exceptions import RQMonitorException
 from rq.worker import Worker
 from rq.suspension import suspend, resume, is_suspended
+from collections import namedtuple
 import logging
 import socket
 
@@ -225,16 +226,18 @@ def list_jobs_api():
             "data": serialised_jobs,
         }
 
-    job_counts = []
+    job_blocks = []
     total_job_count = 0
+
+    blocks = namedtuple("blocks", "queue registry count")
 
     for queue in requested_queues:
         for job_status in requested_job_status:
             queue_registry_count = job_count_in_queue_registry(queue, job_status)
-            job_counts.append((queue, job_status, queue_registry_count))
+            job_blocks.append(blocks(queue, job_status, queue_registry_count))
             total_job_count += queue_registry_count
 
-    jobs = resolve_jobs(job_counts, start, length)
+    jobs = resolve_jobs(job_blocks, start, length)
 
     for job in jobs:
         serialised_jobs.append(reformat_job_data(job))
@@ -254,7 +257,7 @@ def delete_workers_api():
     if request.method == "POST":
         worker_id = request.form.get("worker_id", None)
         delete_all = request.form.get("delete_all")
-        if worker_id == None and (delete_all == "false" or delete_all == None):
+        if worker_id is None and (delete_all == "false" or delete_all is None):
             raise RQMonitorException("Worker ID not received", status_code=400)
 
         if delete_all == "true":

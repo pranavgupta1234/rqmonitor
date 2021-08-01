@@ -1,9 +1,6 @@
-import unittest
 import sys
 import os
 import json
-import redis
-from rq import pop_connection, push_connection
 
 sys.path.insert(0, os.path.join(os.getcwd(), "../"))
 
@@ -11,9 +8,6 @@ from tests import RQMonitorTestCase
 from tests import fixtures
 from rq.job import Job
 from rq.queue import Queue
-from rq.connections import _connection_stack
-from rq.worker import Worker
-from pprint import pprint
 
 HTTP_OK = 200
 HTTP_BAD_REQUEST = 400
@@ -127,7 +121,6 @@ class TestBlueprintViews(RQMonitorTestCase):
             q2.enqueue_job(job)
 
         self.assertEqual(q1.count + q2.count, 25)
-
         query_string1 = {
             "start": 0,
             "length": 10,

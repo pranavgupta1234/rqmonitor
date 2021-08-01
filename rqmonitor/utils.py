@@ -5,7 +5,6 @@ import signal
 import logging
 import socket
 import zlib
-import errno
 from rq.registry import (
     StartedJobRegistry,
     FinishedJobRegistry,
@@ -13,6 +12,7 @@ from rq.registry import (
     DeferredJobRegistry,
     ScheduledJobRegistry,
 )
+from rq.exceptions import NoSuchJobError
 from rq.connections import resolve_connection
 from rq.utils import utcparse
 from rq.exceptions import InvalidJobOperationError
@@ -23,6 +23,7 @@ from rq.queue import Queue
 from rq.job import Job
 from fabric import Connection, Config
 from invoke import UnexpectedExit
+from rqmonitor.constants import RQ_REDIS_NAMESPACE
 
 
 logger = logging.getLogger(__name__)
@@ -53,6 +54,10 @@ def send_signal_worker(worker_id):
     worker_instance.request_stop(signum=2, frame=5)
 
 
+def attach_rq_queue_prefix(queue_id):
+    return Queue.redis_queue_namespace_prefix + queue_id
+
+
 def delete_queue(queue_id):
     """
     :param queue_id: Queue ID/name to delete
@@ -61,10 +66,6 @@ def delete_queue(queue_id):
     As no specific exception is raised for below method
     we are using general Exception class for now
     """
-
-    def attach_rq_queue_prefix(queue_id):
-        return Queue.redis_queue_namespace_prefix + queue_id
-
     queue_instance = Queue.from_queue_key(attach_rq_queue_prefix(queue_id))
     queue_instance.delete()
 
@@ -77,10 +78,6 @@ def empty_queue(queue_id):
     As no specific exception is raised for below method
     we are using general Exception class for now
     """
-
-    def attach_rq_queue_prefix(queue_id):
-        return Queue.redis_queue_namespace_prefix + queue_id
-
     queue_instance = Queue.from_queue_key(attach_rq_queue_prefix(queue_id))
     queue_instance.empty()
 
@@ -201,10 +198,9 @@ def validate_job_data(
 ):
     if not val:
         return default
-
-    if humanize_func == None and append_s == True:
+    if humanize_func is None and append_s is True:
         return str(val) + "s"
-    elif humanize_func == None:
+    elif humanize_func is None:
         return val
     else:
         if with_utcparse and relative_to_now:
@@ -315,57 +311,64 @@ def list_jobs_in_queue_all_registries(queue):
     return jobs
 
 
-def list_jobs_in_queue_registry(queue, registry, start, end):
+def list_jobs_in_queue_registry(queue, registry, start=0, end=-1):
     """
+    :param end: end index for picking jobs
+    :param start: start index for picking jobs
     :param queue: Queue name from which jobs need to be listed
-    :param registry: registry class from which jobs to be returned, default is all registries
-    :return: list of all jobs matching above criteria
+    :param registry: registry class from which jobs to be returned
+    :return: list of all jobs matching above criteria at present scenario
+
+    By default returns all jobs in given queue and registry combination
     """
     queue = get_queue(queue)
+    redis_connection = resolve_connection()
     if registry == StartedJobRegistry or registry == "started":
         job_ids = queue.started_job_registry.get_job_ids(start, end)
-        return [Job.fetch(job_id) for job_id in job_ids]
+        return [
+            x
+            for x in Job.fetch_many(job_ids=job_ids, connection=redis_connection)
+            if x is not None
+        ]
     elif registry == FinishedJobRegistry or registry == "finished":
         job_ids = queue.finished_job_registry.get_job_ids(start, end)
-        return [Job.fetch(job_id) for job_id in job_ids]
+        return [
+            x
+            for x in Job.fetch_many(job_ids=job_ids, connection=redis_connection)
+            if x is not None
+        ]
     elif registry == FailedJobRegistry or registry == "failed":
         job_ids = queue.failed_job_registry.get_job_ids(start, end)
-        return [Job.fetch(job_id) for job_id in job_ids]
+        return [
+            x
+            for x in Job.fetch_many(job_ids=job_ids, connection=redis_connection)
+            if x is not None
+        ]
     elif registry == DeferredJobRegistry or registry == "deferred":
         job_ids = queue.deferred_job_registry.get_job_ids(start, end)
-        return [Job.fetch(job_id) for job_id in job_ids]
+        return [
+            x
+            for x in Job.fetch_many(job_ids=job_ids, connection=redis_connection)
+            if x is not None
+        ]
     elif registry == ScheduledJobRegistry or registry == "scheduled":
         job_ids = queue.scheduled_job_registry.get_job_ids(start, end)
-        return [Job.fetch(job_id) for job_id in job_ids]
+        return [
+            x
+            for x in Job.fetch_many(job_ids=job_ids, connection=redis_connection)
+            if x is not None
+        ]
     # although not implemented as registry this is for ease
     elif registry == "queued":
-        return queue.get_jobs(start, end - start + 1)
-    else:
-        return []
-
-
-def list_job_ids_in_queue_registry(queue, registry, start=0, end=-1):
-    """
-    :param queue: Queue name from which jobs need to be listed
-    :param registry: registry class from which jobs to be returned, default is all registries
-    :return: list of all jobs matching above criteria
-    """
-    queue = get_queue(queue)
-    if registry == StartedJobRegistry or registry == "started":
-        return queue.started_job_registry.get_job_ids(start, end)
-    elif registry == FinishedJobRegistry or registry == "finished":
-        return queue.finished_job_registry.get_job_ids(start, end)
-    elif registry == FailedJobRegistry or registry == "failed":
-        return queue.failed_job_registry.get_job_ids(start, end)
-    elif registry == DeferredJobRegistry or registry == "deferred":
-        return queue.deferred_job_registry.get_job_ids(start, end)
-    elif registry == ScheduledJobRegistry or registry == "scheduled":
-        return queue.scheduled_job_registry.get_job_ids(start, end)
-    # although not implemented as registry this is for ease and uniformity
-    elif registry == "queued":
-        return queue.get_job_ids(start, end - start + 1)
-    else:
-        return []
+        # get_jobs API has (offset, length) as parameter, while above function has start, end
+        # so below is hack to fit this on above deifinition
+        if end == -1:
+            # -1 means all are required so pass as it is
+            return queue.get_jobs(start, end)
+        else:
+            # end-start+1 gives required length
+            return queue.get_jobs(start, end-start+1)
+    return []
 
 
 def empty_registry(registry_name, queue_name, connection=None):
@@ -429,28 +432,30 @@ def requeue_all_jobs_in_failed_registry(queues):
     for queue in queues:
         failed_job_registry = get_queue(queue).failed_job_registry
         job_ids = failed_job_registry.get_job_ids()
-
         for job_id in job_ids:
             try:
                 failed_job_registry.requeue(job_id)
             except InvalidJobOperationError:
                 fail_count += 1
-
     return fail_count
 
 
 def cancel_all_queued_jobs(queues):
+    """
+    :param queues: list of queues from which to cancel the jobs
+    :return: None
+    """
     for queue in queues:
         job_ids = get_queue(queue).get_job_ids()
         for job_id in job_ids:
-            Job.fetch(job_id).cancel()
+            cancel_job(job_id)
 
 
 def job_count_in_queue_registry(queue, registry):
     """
     :param queue: Queue name from which jobs need to be listed
-    :param registry: registry class from which jobs to be returned, default is all registries
-    :return: list of all jobs matching above criteria
+    :param registry: registry class from which jobs to be returned
+    :return: count of jobs matching above criteria
     """
     queue = get_queue(queue)
     if registry == StartedJobRegistry or registry == "started":
@@ -463,7 +468,7 @@ def job_count_in_queue_registry(queue, registry):
         return len(queue.deferred_job_registry)
     elif registry == ScheduledJobRegistry or registry == "scheduled":
         return len(queue.scheduled_job_registry)
-    # although not implemented as registry this is for ease
+    # although not implemented as registry this is for uniformity in API
     elif registry == "queued":
         return len(queue)
     else:
@@ -476,7 +481,6 @@ def get_redis_memory_used(connection=None):
     :param connection:
     :return:
     """
-    RQ_REDIS_NAMESPACE = "rq:*"
     redis_connection = resolve_connection(connection)
     script = """
         local sum = 0;
@@ -501,27 +505,48 @@ def get_redis_memory_used(connection=None):
     return humanize.naturalsize(script(args=[RQ_REDIS_NAMESPACE]))
 
 
+def fetch_job(job_id):
+    """
+    :param job_id: Job to be fetched
+    :return: Job instance
+    :raises NoSuchJobError if job is not found
+    """
+    try:
+        job = Job.fetch(job_id)
+        return job
+    except NoSuchJobError as e:
+        logger.error("Job {} not available in redis".format(job_id))
+        raise
+
+
 def delete_job(job_id):
     """
-    Deleted job from the queue
-    Does a implicit cancel with Job hash deleted
+    Deletes job from the queue
+    Does an implicit cancel with Job hash deleted
     :param job_id: Job id to be deleted
     :return: None
     """
-    job_instance = Job.fetch(job_id)
-    job_instance.delete(remove_from_queue=True)
+    try:
+        job = fetch_job(job_id)
+        job.delete(remove_from_queue=True)
+    except NoSuchJobError as e:
+        logger.error(
+            "Job not found in redis, deletion failed for job id : {}".format(e)
+        )
 
 
 def requeue_job(job_id):
     """
     Requeue job from the queue
     Will work only if job was failed
-    :param job_id: Job id to be requeue
+    :param job_id: Job id to be requeued
     :return: None
-
     """
-    job_instance = Job.fetch(job_id)
-    job_instance.requeue()
+    try:
+        job = fetch_job(job_id)
+        job.requeue()
+    except NoSuchJobError as e:
+        logger.error("Job not found in redis, requeue failed for job id : {}".format(e))
 
 
 def cancel_job(job_id):
@@ -530,34 +555,46 @@ def cancel_job(job_id):
     :param job_id: Job id to be cancelled
     :return: None
     """
-    job_instance = Job.fetch(job_id)
-    job_instance.cancel()
+    try:
+        job = fetch_job(job_id)
+        job.cancel()
+    except NoSuchJobError as e:
+        logger.error("Job not found in redis, cancel failed for job id : {}".format(e))
+
+
+def find_start_block(job_counts, start):
+    """
+    :return: index of block from where job picking will start from,
+    cursor indicating index of starting job in selected block
+    """
+    cumulative_count = 0
+    for i, block in enumerate(job_counts):
+        cumulative_count += block.count
+        if cumulative_count > start:
+            return i, start - (cumulative_count - block.count)
 
 
 def resolve_jobs(job_counts, start, length):
+    """
+    :param job_counts: list of blocks(queue, registry, job_count)
+    :param start: job start index for datatables
+    :param length: number of jobs to be returned for datatables
+    :return: list of jobs of len <= "length"
 
-    start_block = 0
-    cursor = 0
+    It may happen during processing some jobs move around registries
+    so jobs may extend from the desired counted blocks
+    """
     jobs = []
-
-    cumulative_count = 0
-    for i, job_count in enumerate(job_counts):
-        cumulative_count += job_count[2]
-        if cumulative_count > start:
-            start_block = i
-            cursor = start - (cumulative_count - job_count[2])
-            break
+    start_block, cursor = find_start_block(job_counts, start)
 
     for i, block in enumerate(job_counts[start_block:]):
-        current_block_length = block[2]
-        while cursor < current_block_length:
-            current_block_jobs = list_jobs_in_queue_registry(
-                block[0], block[1], cursor, cursor + length - 1
-            )
-            cursor += length
-            jobs.extend(current_block_jobs)
-            if len(jobs) >= length:
-                return jobs[:length]
+        # below list does not contain any None, but might give some less jobs
+        # as some might have been moved out from that registry, in such case we try to
+        # fill our length by capturing the ones from other selected registries
+        current_block_jobs = list_jobs_in_queue_registry(block.queue, block.registry, start=cursor)
+        jobs.extend(current_block_jobs)
         cursor = 0
+        if len(jobs) >= length:
+            return jobs[:length]
 
     return jobs[:length]
