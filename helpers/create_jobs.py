@@ -7,7 +7,7 @@ import redis
 
 TOTAL_JOBS = 5000
 REDIS_HOST = "localhost"
-REDIS_PORT = 6889
+REDIS_PORT = 6379
 JOB_TIMEOUT = 100  # keep greater than job processing time for testing
 
 queues = [

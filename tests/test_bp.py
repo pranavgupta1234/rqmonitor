@@ -173,3 +173,18 @@ class TestBlueprintViews(RQMonitorTestCase):
             self.assertNotIn(job_data, data3)
         for job_id in data1:
             self.assertNotIn(job_id, data2)
+
+    def test_no_jobs(self):
+        q1 = Queue("q1")
+        q2 = Queue("q2")
+        self.assertEqual(len(q1), 0)
+        self.assertEqual(len(q2), 0)
+        query_string = {
+            "start": 0,
+            "length": 10,
+            "draw": 1,
+            "queues[]": ["q1", "q2"],
+            "jobstatus[]": ["queued"],
+        }
+        response = self.client.get("/jobs", query_string=query_string)
+        self.assertEqual(response.status_code, HTTP_OK)

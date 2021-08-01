@@ -367,7 +367,7 @@ def list_jobs_in_queue_registry(queue, registry, start=0, end=-1):
             return queue.get_jobs(start, end)
         else:
             # end-start+1 gives required length
-            return queue.get_jobs(start, end-start+1)
+            return queue.get_jobs(start, end - start + 1)
     return []
 
 
@@ -572,6 +572,8 @@ def find_start_block(job_counts, start):
         cumulative_count += block.count
         if cumulative_count > start:
             return i, start - (cumulative_count - block.count)
+    # marker is start index isn't available in selected jobs
+    return -1, -1
 
 
 def resolve_jobs(job_counts, start, length):
@@ -587,11 +589,16 @@ def resolve_jobs(job_counts, start, length):
     jobs = []
     start_block, cursor = find_start_block(job_counts, start)
 
+    if start_block == -1:
+        return jobs
+
     for i, block in enumerate(job_counts[start_block:]):
         # below list does not contain any None, but might give some less jobs
         # as some might have been moved out from that registry, in such case we try to
         # fill our length by capturing the ones from other selected registries
-        current_block_jobs = list_jobs_in_queue_registry(block.queue, block.registry, start=cursor)
+        current_block_jobs = list_jobs_in_queue_registry(
+            block.queue, block.registry, start=cursor
+        )
         jobs.extend(current_block_jobs)
         cursor = 0
         if len(jobs) >= length:
