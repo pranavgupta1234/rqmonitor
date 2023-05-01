@@ -4,5 +4,5 @@ six==1.13.0
 invoke==1.4.1
 fabric==2.5.0
 humanize==2.4.0
-Flask==1.1.1
+Flask==2.3.2
 rq==1.4.0
